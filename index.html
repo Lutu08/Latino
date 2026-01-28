@@ -16,6 +16,7 @@
             background: linear-gradient(135deg, #0a192f, #1a365d);
             color: white;
             min-height: 100vh;
+            overflow-x: hidden;
         }
         
         .container {
@@ -75,6 +76,7 @@
             border: 2px solid #00d4ff;
             display: block;
             box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
+            cursor: crosshair;
         }
         
         .grid-overlay {
@@ -95,8 +97,10 @@
         .buildable {
             background: rgba(0, 255, 0, 0.3) !important;
             border: 2px solid rgba(0, 255, 0, 0.6) !important;
-            cursor: pointer;
+            cursor: pointer !important;
             transition: all 0.3s;
+            pointer-events: auto !important;
+            z-index: 10;
         }
         
         .buildable:hover {
@@ -346,6 +350,26 @@
                 min-width: 100%;
             }
         }
+        
+        .build-hint {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #00d4ff;
+            display: none;
+            z-index: 100;
+            pointer-events: none;
+        }
+        
+        .tower-range {
+            position: absolute;
+            border: 1px dashed rgba(0, 212, 255, 0.5);
+            border-radius: 50%;
+            pointer-events: none;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -382,6 +406,7 @@
             <div class="game-board">
                 <canvas id="gameCanvas" width="800" height="600"></canvas>
                 <div class="grid-overlay" id="gridOverlay"></div>
+                <div class="build-hint" id="buildHint"></div>
                 
                 <div class="controls">
                     <button class="btn" id="startWave">
@@ -403,7 +428,7 @@
                     <div class="wave-progress">
                         <div class="wave-progress-bar" id="waveProgress"></div>
                     </div>
-                    <p id="waveStatus">Preparando defensas...</p>
+                    <p id="waveStatus">Selecciona una torre y haz clic en una zona verde para construir</p>
                 </div>
             </div>
             
@@ -537,7 +562,7 @@
 
     <script>
         // ============================================
-        // CONFIGURACIÓN MEJORADA DEL JUEGO
+        // CONFIGURACIÓN MEJORADA DEL JUEGO - TODO CORREGIDO
         // ============================================
         
         // Variables del juego
@@ -557,13 +582,50 @@
         let specialPowerActive = false;
         let damageBoostActive = false;
         let damageBoostEndTime = 0;
+        let lastTime = 0;
+        let enemySpawnInterval = null;
+        let enemiesThisWave = 0;
+        let enemiesSpawned = 0;
         
         // Estadísticas de torres
         const towerStats = {
-            archer: { damage: 25, range: 100, fireRate: 500, cost: 150 },
-            mage: { damage: 40, range: 120, fireRate: 1000, cost: 300 },
-            cannon: { damage: 65, range: 80, fireRate: 1500, cost: 400 },
-            ice: { damage: 15, range: 90, fireRate: 800, cost: 250, slow: true }
+            archer: { 
+                name: "Arquero Élite", 
+                damage: 25, 
+                range: 120, 
+                fireRate: 800, 
+                cost: 150,
+                color: '#00ff88',
+                icon: '🏹'
+            },
+            mage: { 
+                name: "Mago Arcano", 
+                damage: 40, 
+                range: 150, 
+                fireRate: 1200, 
+                cost: 300,
+                color: '#ff00ff',
+                icon: '🔮'
+            },
+            cannon: { 
+                name: "Cañón Pesado", 
+                damage: 65, 
+                range: 100, 
+                fireRate: 1500, 
+                cost: 400,
+                color: '#ff8800',
+                icon: '💣'
+            },
+            ice: { 
+                name: "Torre Glacial", 
+                damage: 15, 
+                range: 110, 
+                fireRate: 1000, 
+                cost: 250,
+                color: '#00ffff',
+                icon: '❄️',
+                slow: 0.5
+            }
         };
         
         // Referencias a elementos del DOM
@@ -580,94 +642,160 @@
         const ctx = canvas.getContext('2d');
         const gridOverlay = document.getElementById('gridOverlay');
         const gameOverScreen = document.getElementById('gameOver');
+        const buildHint = document.getElementById('buildHint');
         
         // ============================================
-        // FUNCIONES PRINCIPALES DEL JUEGO
+        // FUNCIONES PRINCIPALES CORREGIDAS
         // ============================================
         
-        // 1. CREAR GRID Y CAMINO MÁS VISIBLE
-        function createGridAndPath() {
-            const gridSize = 40;
-            const cols = Math.floor(canvas.width / gridSize);
-            const rows = Math.floor(canvas.height / gridSize);
-            gridOverlay.innerHTML = '';
-            
-            // Definir el camino (más visible)
-            const pathCells = [];
-            // Camino horizontal superior
-            for (let x = 0; x <= 9; x++) {
-                pathCells.push([x, 3]);
-            }
-            // Camino vertical derecho
-            for (let y = 3; y <= 12; y++) {
-                pathCells.push([9, y]);
-            }
-            // Camino horizontal inferior
-            for (let x = 9; x >= 0; x--) {
-                pathCells.push([x, 12]);
-            }
-            
-            // Definir zonas de construcción (más claras)
-            const buildableCells = [
-                [2, 5], [3, 5], [4, 5], [5, 5], [6, 5], [7, 5],
-                [2, 8], [3, 8], [4, 8], [5, 8], [6, 8], [7, 8],
-                [1, 6], [1, 7], [1, 9], [1, 10],
-                [8, 6], [8, 7], [8, 9], [8, 10]
-            ];
-            
-            // Crear celdas de camino
-            pathCells.forEach(([x, y]) => {
-                const cell = document.createElement('div');
-                cell.className = 'grid-cell path-cell';
-                cell.style.width = `${gridSize}px`;
-                cell.style.height = `${gridSize}px`;
-                cell.style.left = `${x * gridSize}px`;
-                cell.style.top = `${y * gridSize}px`;
-                gridOverlay.appendChild(cell);
-            });
+        // 1. INICIALIZAR EL JUEGO
+        function initGame() {
+            console.log("Iniciando juego...");
             
             // Crear zonas de construcción
-            buildableCells.forEach(([x, y]) => {
-                const cell = document.createElement('div');
-                cell.className = 'grid-cell buildable';
-                cell.style.width = `${gridSize}px`;
-                cell.style.height = `${gridSize}px`;
-                cell.style.left = `${x * gridSize}px`;
-                cell.style.top = `${y * gridSize}px`;
-                cell.addEventListener('click', () => buildTower(x, y));
-                gridOverlay.appendChild(cell);
-            });
+            createBuildZones();
+            
+            // Configurar eventos
+            setupEventListeners();
+            
+            // Iniciar bucle del juego
+            requestAnimationFrame(gameLoop);
+            
+            // Mostrar mensaje inicial
+            waveStatusEl.textContent = "Selecciona una torre y haz clic en una zona verde para construir";
+            waveStatusEl.style.color = "#00d4ff";
+            
+            alert("¡Bienvenido a Kingdom Defense Pro! Selecciona una torre y haz clic en las zonas verdes para construir.");
         }
         
-        // 2. CONSTRUIR TORRE
-        function buildTower(gridX, gridY) {
+        // 2. CREAR ZONAS DE CONSTRUCCIÓN (CORREGIDO)
+        function createBuildZones() {
+            console.log("Creando zonas de construcción...");
+            gridOverlay.innerHTML = '';
+            
+            // Coordenadas de las zonas de construcción (en píxeles)
+            const buildZones = [
+                // Fila superior
+                {x: 80, y: 200, width: 40, height: 40},
+                {x: 160, y: 200, width: 40, height: 40},
+                {x: 240, y: 200, width: 40, height: 40},
+                {x: 320, y: 200, width: 40, height: 40},
+                
+                // Fila media superior
+                {x: 120, y: 240, width: 40, height: 40},
+                {x: 200, y: 240, width: 40, height: 40},
+                {x: 280, y: 240, width: 40, height: 40},
+                
+                // Fila media inferior
+                {x: 120, y: 320, width: 40, height: 40},
+                {x: 200, y: 320, width: 40, height: 40},
+                {x: 280, y: 320, width: 40, height: 40},
+                
+                // Fila inferior
+                {x: 80, y: 360, width: 40, height: 40},
+                {x: 160, y: 360, width: 40, height: 40},
+                {x: 240, y: 360, width: 40, height: 40},
+                {x: 320, y: 360, width: 40, height: 40},
+                
+                // Columnas laterales
+                {x: 40, y: 240, width: 40, height: 40},
+                {x: 40, y: 280, width: 40, height: 40},
+                {x: 40, y: 320, width: 40, height: 40},
+                {x: 360, y: 240, width: 40, height: 40},
+                {x: 360, y: 280, width: 40, height: 40},
+                {x: 360, y: 320, width: 40, height: 40}
+            ];
+            
+            // Crear celdas de construcción
+            buildZones.forEach((zone, index) => {
+                const cell = document.createElement('div');
+                cell.className = 'grid-cell buildable';
+                cell.id = `build-cell-${index}`;
+                cell.style.width = `${zone.width}px`;
+                cell.style.height = `${zone.height}px`;
+                cell.style.left = `${zone.x}px`;
+                cell.style.top = `${zone.y}px`;
+                cell.style.pointerEvents = 'auto';
+                cell.style.cursor = 'pointer';
+                cell.style.zIndex = '10';
+                
+                // Evento de clic CORREGIDO
+                cell.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    handleBuildClick(zone.x + 20, zone.y + 20); // Centro de la celda
+                });
+                
+                // Evento hover para mostrar pista
+                cell.addEventListener('mouseenter', () => {
+                    if (selectedTower) {
+                        const stats = towerStats[selectedTower];
+                        buildHint.textContent = `Construir ${stats.name} (${stats.cost} oro)`;
+                        buildHint.style.left = `${zone.x}px`;
+                        buildHint.style.top = `${zone.y - 40}px`;
+                        buildHint.style.display = 'block';
+                    }
+                });
+                
+                cell.addEventListener('mouseleave', () => {
+                    buildHint.style.display = 'none';
+                });
+                
+                gridOverlay.appendChild(cell);
+            });
+            
+            console.log(`${buildZones.length} zonas de construcción creadas`);
+        }
+        
+        // 3. MANEJAR CLIC PARA CONSTRUIR (CORREGIDO)
+        function handleBuildClick(x, y) {
+            console.log(`Clic en zona de construcción: ${x}, ${y}`);
+            
             if (!selectedTower) {
-                alert('Primero selecciona una torre para construir');
+                showMessage("¡Selecciona una torre primero!", "error");
                 return;
             }
             
             const stats = towerStats[selectedTower];
+            
+            // Verificar si hay suficiente oro
             if (gold < stats.cost) {
-                alert(`No tienes suficiente oro! Necesitas ${stats.cost}`);
+                showMessage(`No tienes suficiente oro. Necesitas ${stats.cost} oro`, "error");
                 return;
             }
             
-            // Verificar si ya hay una torre aquí
-            const x = gridX * 40 + 20;
-            const y = gridY * 40 + 20;
-            
-            const existingTower = towers.find(t => 
-                Math.abs(t.x - x) < 40 && Math.abs(t.y - y) < 40
-            );
-            
-            if (existingTower) {
-                alert('Ya hay una torre aquí!');
+            // Verificar que no esté en el camino
+            if (isOnPath(x, y)) {
+                showMessage("¡No puedes construir en el camino!", "error");
                 return;
             }
             
+            // Verificar distancia mínima de otras torres
+            const tooClose = towers.some(tower => {
+                const dx = tower.x - x;
+                const dy = tower.y - y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                return distance < 50; // 50px de distancia mínima
+            });
+            
+            if (tooClose) {
+                showMessage("¡Muy cerca de otra torre!", "error");
+                return;
+            }
+            
+            // Construir la torre
+            buildTower(selectedTower, x, y);
+        }
+        
+        // 4. CONSTRUIR TORRE (CORREGIDO)
+        function buildTower(type, x, y) {
+            const stats = towerStats[type];
+            
+            // Restar oro
             gold -= stats.cost;
-            towers.push({
-                type: selectedTower,
+            
+            // Crear objeto torre
+            const tower = {
+                type: type,
                 x: x,
                 y: y,
                 damage: stats.damage,
@@ -675,133 +803,350 @@
                 fireRate: stats.fireRate,
                 lastShot: 0,
                 level: 1,
-                color: getTowerColor(selectedTower)
-            });
+                color: stats.color,
+                icon: stats.icon,
+                cost: stats.cost,
+                slow: stats.slow || 1
+            };
             
+            // Agregar a la lista
+            towers.push(tower);
+            
+            // Actualizar UI
             updateUI();
-            showMessage(`Torre ${selectedTower} construida por ${stats.cost} oro`);
+            
+            // Mostrar mensaje
+            showMessage(`¡Torre ${stats.name} construida por ${stats.cost} oro!`, "success");
+            
+            console.log(`Torre construida: ${type} en (${x}, ${y})`);
         }
         
-        // 3. INICIAR SIGUIENTE OLEADA
-        function startNextWave() {
-            if (gameRunning || enemies.length > 0) {
-                alert('¡Termina la oleada actual primero!');
+        // 5. VERIFICAR SI ESTÁ EN EL CAMINO
+        function isOnPath(x, y) {
+            // Definir el camino
+            const path = [
+                {x: 0, y: 120, width: 360, height: 40},    // Horizontal superior
+                {x: 360, y: 120, width: 40, height: 320},  // Vertical derecha
+                {x: 40, y: 440, width: 320, height: 40}    // Horizontal inferior
+            ];
+            
+            // Verificar si el punto está dentro de alguna parte del camino
+            return path.some(segment => 
+                x >= segment.x && 
+                x <= segment.x + segment.width && 
+                y >= segment.y && 
+                y <= segment.y + segment.height
+            );
+        }
+        
+        // 6. CONFIGURAR EVENT LISTENERS
+        function setupEventListeners() {
+            console.log("Configurando event listeners...");
+            
+            // Selección de torres
+            document.querySelectorAll('.tower-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    // Remover selección anterior
+                    document.querySelectorAll('.tower-card').forEach(c => {
+                        c.classList.remove('selected');
+                    });
+                    
+                    // Agregar selección actual
+                    this.classList.add('selected');
+                    selectedTower = this.dataset.tower;
+                    
+                    // Cambiar cursor
+                    canvas.style.cursor = 'crosshair';
+                    
+                    // Mostrar mensaje
+                    const stats = towerStats[selectedTower];
+                    showMessage(`${stats.name} seleccionada (${stats.cost} oro)`, "info");
+                });
+            });
+            
+            // Botón de iniciar oleada
+            document.getElementById('startWave').addEventListener('click', startWave);
+            
+            // Botón de mejorar todas
+            document.getElementById('upgradeAll').addEventListener('click', upgradeAllTowers);
+            
+            // Botón de vender torre
+            document.getElementById('sellTower').addEventListener('click', sellLastTower);
+            
+            // Botón de poder especial
+            document.getElementById('specialPower').addEventListener('click', useSpecialPower);
+            
+            // Tienda
+            document.getElementById('buyGold').addEventListener('click', () => buyItem('gold', 500, 5));
+            document.getElementById('buyLives').addEventListener('click', () => buyItem('lives', 10, 8));
+            document.getElementById('buyDamage').addEventListener('click', () => buyItem('damage', 0, 15));
+            
+            // Game over buttons
+            document.getElementById('playAgain').addEventListener('click', resetGame);
+            document.getElementById('continueGame').addEventListener('click', continueGame);
+            document.getElementById('shareScore').addEventListener('click', shareScore);
+            
+            // Clic en el canvas (para construcción alternativa)
+            canvas.addEventListener('click', (e) => {
+                if (!selectedTower) return;
+                
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                // Solo construir en áreas permitidas
+                const buildZones = [
+                    {x1: 40, y1: 200, x2: 400, y2: 400}, // Área general de construcción
+                ];
+                
+                const isInBuildZone = buildZones.some(zone => 
+                    x >= zone.x1 && x <= zone.x2 && y >= zone.y1 && y <= zone.y2
+                );
+                
+                if (!isInBuildZone) {
+                    showMessage("Solo puedes construir en las zonas verdes", "error");
+                    return;
+                }
+                
+                // Construir en la posición del clic
+                handleBuildClick(x, y);
+            });
+            
+            console.log("Event listeners configurados");
+        }
+        
+        // 7. INICIAR OLEADA
+        function startWave() {
+            if (gameRunning) {
+                showMessage("¡Ya hay una oleada en progreso!", "error");
                 return;
             }
             
-            wave++;
-            updateUI();
-            gameRunning = true;
-            waveTimer = 0;
-            
-            // Crear enemigos basados en la oleada
-            const enemyCount = 5 + wave * 2;
-            
-            for (let i = 0; i < enemyCount; i++) {
-                setTimeout(() => {
-                    createEnemy();
-                }, i * 1000);
+            if (enemies.length > 0) {
+                showMessage("¡Termina los enemigos actuales primero!", "error");
+                return;
             }
             
-            waveStatusEl.textContent = `Oleada ${wave} en progreso (${enemigos.length} enemigos)`;
-            showMessage(`¡Oleada ${wave} iniciada! ${enemyCount} enemigos se acercan`);
+            gameRunning = true;
+            waveStatusEl.textContent = `¡Oleada ${wave} iniciada!`;
+            waveStatusEl.style.color = "#ff6b00";
+            
+            // Calcular número de enemigos
+            enemiesThisWave = 5 + wave * 2;
+            enemiesSpawned = 0;
+            
+            // Iniciar spawn de enemigos
+            enemySpawnInterval = setInterval(() => {
+                if (enemiesSpawned < enemiesThisWave) {
+                    spawnEnemy();
+                    enemiesSpawned++;
+                } else {
+                    clearInterval(enemySpawnInterval);
+                }
+            }, 1000);
+            
+            showMessage(`¡Oleada ${wave} iniciada! ${enemiesThisWave} enemigos se acercan`, "warning");
         }
         
-        // 4. CREAR ENEMIGO
-        function createEnemy() {
-            const baseHealth = 50 + (wave - 1) * 20; // Ajustado: menos vida
+        // 8. CREAR ENEMIGO
+        function spawnEnemy() {
+            const baseHealth = 50 + (wave - 1) * 20;
             const baseSpeed = 1 + wave * 0.1;
             const baseBounty = 10 + wave * 5;
             
+            // Tipos de enemigos según oleada
+            let type = 'normal';
+            let color = 'red';
+            let size = 15;
+            
+            if (wave >= 5) {
+                type = 'elite';
+                color = 'purple';
+                size = 20;
+            }
+            
+            if (wave >= 8) {
+                type = 'boss';
+                color = 'orange';
+                size = 25;
+            }
+            
             const enemy = {
-                x: 0,
-                y: 120,
+                x: -30,
+                y: 140,
                 width: 30,
                 height: 30,
-                health: baseHealth,
-                maxHealth: baseHealth,
-                speed: baseSpeed,
-                bounty: baseBounty,
+                health: type === 'elite' ? baseHealth * 1.5 : type === 'boss' ? baseHealth * 3 : baseHealth,
+                maxHealth: type === 'elite' ? baseHealth * 1.5 : type === 'boss' ? baseHealth * 3 : baseHealth,
+                speed: type === 'boss' ? baseSpeed * 0.7 : baseSpeed,
+                bounty: type === 'elite' ? baseBounty * 2 : type === 'boss' ? baseBounty * 5 : baseBounty,
+                type: type,
+                color: color,
+                size: size,
                 pathIndex: 0,
-                color: wave < 3 ? 'red' : wave < 6 ? 'purple' : 'orange'
+                path: [
+                    {x: 0, y: 140},   // Inicio
+                    {x: 350, y: 140}, // Giro derecho
+                    {x: 350, y: 430}, // Bajada
+                    {x: 50, y: 430},  // Giro izquierda
+                    {x: 50, y: 470}   // Fin (salida)
+                ]
             };
             
             enemies.push(enemy);
         }
         
-        // 5. ACTUALIZAR TORRES (DISPARAR)
+        // 9. ACTUALIZAR TORRES (DISPARAR)
         function updateTowers(currentTime) {
             towers.forEach(tower => {
-                // Encontrar enemigo en rango
-                const target = enemies.find(enemy => {
+                // Buscar enemigo en rango
+                let target = null;
+                let closestDistance = tower.range;
+                
+                enemies.forEach(enemy => {
                     const dx = tower.x - enemy.x;
                     const dy = tower.y - enemy.y;
-                    return Math.sqrt(dx*dx + dy*dy) <= tower.range;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < closestDistance) {
+                        closestDistance = distance;
+                        target = enemy;
+                    }
                 });
                 
+                // Disparar si hay objetivo y ha pasado el tiempo de recarga
                 if (target && currentTime - tower.lastShot > tower.fireRate) {
-                    // Disparar
+                    // Calcular daño (con boost si está activo)
+                    let damage = tower.damage;
+                    if (damageBoostActive) {
+                        damage *= 2;
+                    }
+                    
+                    // Crear bala
                     bullets.push({
                         x: tower.x,
                         y: tower.y,
                         target: target,
-                        damage: damageBoostActive ? tower.damage * 2 : tower.damage,
+                        damage: damage,
                         color: tower.color,
-                        type: tower.type
+                        type: tower.type,
+                        slow: tower.slow
                     });
                     
+                    // Actualizar último disparo
                     tower.lastShot = currentTime;
                 }
             });
         }
         
-        // 6. VERIFICAR SI OLEADA COMPLETADA
-        function checkWaveComplete() {
-            if (gameRunning && enemies.length === 0) {
-                gameRunning = false;
-                points += wave * 100;
-                gold += wave * 50;
-                gems += 5;
-                
-                if (wave >= maxWaves) {
-                    showVictory();
+        // 10. ACTUALIZAR ELEMENTOS DEL JUEGO
+        function updateGameElements() {
+            // Mover enemigos por el camino
+            enemies.forEach((enemy, index) => {
+                if (enemy.pathIndex < enemy.path.length - 1) {
+                    const target = enemy.path[enemy.pathIndex + 1];
+                    const dx = target.x - enemy.x;
+                    const dy = target.y - enemy.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < enemy.speed) {
+                        enemy.pathIndex++;
+                        enemy.x = target.x;
+                        enemy.y = target.y;
+                    } else {
+                        enemy.x += (dx / distance) * enemy.speed;
+                        enemy.y += (dy / distance) * enemy.speed;
+                    }
                 } else {
-                    waveStatusEl.textContent = `¡Oleada ${wave} completada! Preparando oleada ${wave + 1}`;
-                    waveTimer = 10; // 10 segundos entre oleadas
-                    showMessage(`¡Oleada ${wave} completada! Recompensa: +${wave * 100} puntos, +${wave * 50} oro, +5 gemas`);
+                    // Enemigo llegó al final
+                    lives--;
+                    enemies.splice(index, 1);
+                    
+                    if (lives <= 0) {
+                        gameOver();
+                    }
+                    
+                    updateUI();
                 }
-                updateUI();
+            });
+            
+            // Mover y verificar balas
+            bullets.forEach((bullet, index) => {
+                if (!bullet.target || bullet.target.health <= 0) {
+                    bullets.splice(index, 1);
+                    return;
+                }
+                
+                const dx = bullet.target.x - bullet.x;
+                const dy = bullet.target.y - bullet.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 10) {
+                    // Impacto
+                    bullet.target.health -= bullet.damage;
+                    
+                    // Efecto de ralentización para torre de hielo
+                    if (bullet.type === 'ice') {
+                        bullet.target.speed *= bullet.slow;
+                    }
+                    
+                    // Verificar si el enemigo murió
+                    if (bullet.target.health <= 0) {
+                        // Recompensas
+                        gold += bullet.target.bounty;
+                        points += bullet.target.type === 'elite' ? 25 : bullet.target.type === 'boss' ? 50 : 10;
+                        enemyKills++;
+                        
+                        // Eliminar enemigo
+                        const enemyIndex = enemies.indexOf(bullet.target);
+                        if (enemyIndex !== -1) {
+                            enemies.splice(enemyIndex, 1);
+                        }
+                    }
+                    
+                    // Eliminar bala
+                    bullets.splice(index, 1);
+                } else {
+                    // Mover bala hacia el objetivo
+                    bullet.x += (dx / distance) * 10;
+                    bullet.y += (dy / distance) * 10;
+                }
+            });
+            
+            // Verificar si la oleada terminó
+            if (gameRunning && enemies.length === 0 && enemiesSpawned >= enemiesThisWave) {
+                endWave();
             }
         }
         
-        // 7. ACTUALIZAR INTERFAZ
-        function updateUI() {
-            goldEl.textContent = gold;
-            waveEl.textContent = wave;
-            livesEl.textContent = lives;
-            pointsEl.textContent = points;
-            gemsEl.textContent = gems;
-            enemyCountEl.textContent = enemies.length;
+        // 11. FINALIZAR OLEADA
+        function endWave() {
+            gameRunning = false;
             
-            // Actualizar progreso de oleada
-            const progress = ((wave - 1) / maxWaves) * 100;
-            waveProgressEl.style.width = `${progress}%`;
+            // Recompensas por completar oleada
+            const waveReward = wave * 100;
+            points += waveReward;
+            gold += wave * 50;
+            gems += 2;
             
-            // Actualizar temporizador
-            if (waveTimer > 0) {
-                nextWaveTimerEl.textContent = waveTimer;
-            } else {
-                nextWaveTimerEl.textContent = '--';
+            // Verificar si ganó el juego
+            if (wave >= maxWaves) {
+                victory();
+                return;
             }
             
-            // Actualizar boost de daño
-            if (damageBoostActive && Date.now() > damageBoostEndTime) {
-                damageBoostActive = false;
-                showMessage('El boost de daño ha terminado');
-            }
+            // Preparar siguiente oleada
+            wave++;
+            waveTimer = 15; // 15 segundos para prepararse
+            
+            showMessage(`¡Oleada completada! Recompensa: +${waveReward} puntos, +${wave * 50} oro, +2 gemas`, "success");
+            waveStatusEl.textContent = `¡Oleada ${wave-1} completada! Siguiente oleada en ${waveTimer} segundos`;
+            waveStatusEl.style.color = "#00ff00";
+            
+            updateUI();
         }
         
-        // 8. DIBUJAR ELEMENTOS EN CANVAS
+        // 12. DIBUJAR ELEMENTOS
         function drawGameElements() {
             // Limpiar canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -821,33 +1166,52 @@
             // Dibujar boost de daño activo
             if (damageBoostActive) {
                 const timeLeft = Math.ceil((damageBoostEndTime - Date.now()) / 1000);
-                ctx.fillStyle = 'rgba(255, 215, 0, 0.7)';
-                ctx.font = 'bold 16px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText(`⚡ x2 DAÑO (${timeLeft}s)`, canvas.width / 2, 30);
+                if (timeLeft > 0) {
+                    ctx.fillStyle = 'rgba(255, 215, 0, 0.7)';
+                    ctx.font = 'bold 16px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`⚡ x2 DAÑO (${timeLeft}s)`, canvas.width / 2, 30);
+                } else {
+                    damageBoostActive = false;
+                }
             }
         }
         
         function drawPath() {
+            // Camino principal
             ctx.fillStyle = '#8B4513';
-            // Camino horizontal superior
-            ctx.fillRect(0, 120, 360, 40);
-            // Camino vertical derecho
-            ctx.fillRect(360, 120, 40, 320);
-            // Camino horizontal inferior
-            ctx.fillRect(40, 440, 320, 40);
+            ctx.fillRect(0, 120, 360, 40);   // Horizontal superior
+            ctx.fillRect(360, 120, 40, 320); // Vertical derecha
+            ctx.fillRect(40, 440, 320, 40);  // Horizontal inferior
             
             // Bordes del camino
             ctx.strokeStyle = '#654321';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 3;
             ctx.strokeRect(0, 120, 360, 40);
             ctx.strokeRect(360, 120, 40, 320);
             ctx.strokeRect(40, 440, 320, 40);
+            
+            // Marcadores de camino
+            ctx.strokeStyle = '#DEB887';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([10, 10]);
+            
+            // Línea central del camino
+            ctx.beginPath();
+            ctx.moveTo(0, 140);
+            ctx.lineTo(360, 140);
+            ctx.moveTo(380, 120);
+            ctx.lineTo(380, 440);
+            ctx.moveTo(40, 460);
+            ctx.lineTo(360, 460);
+            ctx.stroke();
+            
+            ctx.setLineDash([]);
         }
         
         function drawTowers() {
             towers.forEach(tower => {
-                // Cuerpo de la torre
+                // Base de la torre
                 ctx.fillStyle = tower.color;
                 ctx.beginPath();
                 ctx.arc(tower.x, tower.y, 20, 0, Math.PI * 2);
@@ -858,142 +1222,268 @@
                 ctx.lineWidth = 2;
                 ctx.stroke();
                 
-                // Mostrar nivel
+                // Detalles
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                ctx.beginPath();
+                ctx.arc(tower.x, tower.y, 15, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Icono
+                ctx.font = '20px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(tower.icon, tower.x, tower.y);
+                
+                // Nivel
                 ctx.fillStyle = 'white';
                 ctx.font = 'bold 12px Arial';
-                ctx.textAlign = 'center';
                 ctx.fillText(`Lv${tower.level}`, tower.x, tower.y + 30);
             });
         }
         
         function drawEnemies() {
-            enemies.forEach((enemy, index) => {
-                // Dibujar enemigo
+            enemies.forEach(enemy => {
+                // Cuerpo del enemigo
                 ctx.fillStyle = enemy.color;
                 ctx.beginPath();
-                ctx.arc(enemy.x + 15, enemy.y + 15, 15, 0, Math.PI * 2);
+                ctx.arc(enemy.x, enemy.y, enemy.size, 0, Math.PI * 2);
                 ctx.fill();
                 
-                // Borde del enemigo
+                // Borde
                 ctx.strokeStyle = '#000000';
                 ctx.lineWidth = 2;
                 ctx.stroke();
                 
+                // Ojos (para darle personalidad)
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(enemy.x - 5, enemy.y - 3, 3, 0, Math.PI * 2);
+                ctx.arc(enemy.x + 5, enemy.y - 3, 3, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = 'black';
+                ctx.beginPath();
+                ctx.arc(enemy.x - 5, enemy.y - 3, 1.5, 0, Math.PI * 2);
+                ctx.arc(enemy.x + 5, enemy.y - 3, 1.5, 0, Math.PI * 2);
+                ctx.fill();
+                
                 // Barra de vida
                 const healthPercent = enemy.health / enemy.maxHealth;
+                const barWidth = 30;
+                const barHeight = 5;
+                const barX = enemy.x - barWidth / 2;
+                const barY = enemy.y - enemy.size - 10;
+                
+                // Fondo de la barra
                 ctx.fillStyle = 'red';
-                ctx.fillRect(enemy.x, enemy.y - 10, 30, 5);
+                ctx.fillRect(barX, barY, barWidth, barHeight);
+                
+                // Vida actual
                 ctx.fillStyle = 'lime';
-                ctx.fillRect(enemy.x, enemy.y - 10, 30 * healthPercent, 5);
+                ctx.fillRect(barX, barY, barWidth * healthPercent, barHeight);
+                
+                // Borde de la barra
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(barX, barY, barWidth, barHeight);
             });
         }
         
         function drawBullets() {
             bullets.forEach(bullet => {
+                // Cuerpo de la bala
                 ctx.fillStyle = bullet.color;
                 ctx.beginPath();
                 ctx.arc(bullet.x, bullet.y, 5, 0, Math.PI * 2);
                 ctx.fill();
                 
-                // Destello en balas
+                // Destello
                 ctx.fillStyle = 'white';
                 ctx.beginPath();
-                ctx.arc(bullet.x - 2, bullet.y - 2, 2, 0, Math.PI * 2);
+                ctx.arc(bullet.x - 1, bullet.y - 1, 2, 0, Math.PI * 2);
                 ctx.fill();
+                
+                // Estela (para balas de hielo)
+                if (bullet.type === 'ice') {
+                    ctx.strokeStyle = 'rgba(0, 255, 255, 0.3)';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(bullet.x, bullet.y);
+                    
+                    // Calcular dirección opuesta al movimiento
+                    const dx = bullet.target.x - bullet.x;
+                    const dy = bullet.target.y - bullet.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    const trailLength = 10;
+                    
+                    ctx.lineTo(
+                        bullet.x - (dx / distance) * trailLength,
+                        bullet.y - (dy / distance) * trailLength
+                    );
+                    ctx.stroke();
+                }
             });
         }
         
-        // 9. MOVER ELEMENTOS DEL JUEGO
-        function updateGameElements() {
-            // Mover enemigos por el camino
-            enemies.forEach((enemy, index) => {
-                // Camino: derecha -> abajo -> izquierda
-                if (enemy.x < 360) {
-                    enemy.x += enemy.speed;
-                } else if (enemy.y < 440) {
-                    enemy.y += enemy.speed;
-                } else if (enemy.x > 40) {
-                    enemy.x -= enemy.speed;
-                } else {
-                    // Enemigo llegó al final
-                    lives--;
-                    enemies.splice(index, 1);
-                    if (lives <= 0) {
-                        showGameOver();
+        // 13. ACTUALIZAR INTERFAZ
+        function updateUI() {
+            goldEl.textContent = gold;
+            waveEl.textContent = wave;
+            livesEl.textContent = lives;
+            pointsEl.textContent = points;
+            gemsEl.textContent = gems;
+            enemyCountEl.textContent = enemies.length;
+            
+            // Actualizar progreso de oleada
+            const progress = ((wave - 1) / maxWaves) * 100;
+            waveProgressEl.style.width = `${progress}%`;
+            
+            // Actualizar temporizador entre oleadas
+            if (waveTimer > 0) {
+                nextWaveTimerEl.textContent = waveTimer;
+            } else {
+                nextWaveTimerEl.textContent = '--';
+            }
+            
+            // Actualizar boost de daño
+            if (damageBoostActive && Date.now() > damageBoostEndTime) {
+                damageBoostActive = false;
+                showMessage('El boost de daño ha terminado', "info");
+            }
+        }
+        
+        // 14. FUNCIONES AUXILIARES
+        function showMessage(text, type = "info") {
+            waveStatusEl.textContent = text;
+            
+            // Colores según tipo de mensaje
+            const colors = {
+                info: "#00d4ff",
+                success: "#00ff00",
+                warning: "#ffaa00",
+                error: "#ff4444"
+            };
+            
+            waveStatusEl.style.color = colors[type] || colors.info;
+            
+            // Auto-ocultar después de 3 segundos (excepto errores)
+            if (type !== "error") {
+                setTimeout(() => {
+                    if (!gameRunning && waveTimer <= 0) {
+                        waveStatusEl.textContent = "Selecciona una torre y haz clic en una zona verde para construir";
+                        waveStatusEl.style.color = "#00d4ff";
                     }
-                    updateUI();
-                    return;
-                }
+                }, 3000);
+            }
+        }
+        
+        function upgradeAllTowers() {
+            if (gold < 200) {
+                showMessage("No tienes suficiente oro. Necesitas 200 oro", "error");
+                return;
+            }
+            
+            if (towers.length === 0) {
+                showMessage("No tienes torres para mejorar", "error");
+                return;
+            }
+            
+            gold -= 200;
+            
+            towers.forEach(tower => {
+                tower.damage *= 1.5;
+                tower.range *= 1.1;
+                tower.fireRate *= 0.9; // Dispara más rápido
+                tower.level++;
             });
             
-            // Mover balas
-            bullets.forEach((bullet, index) => {
-                if (!bullet.target || bullet.target.health <= 0) {
-                    bullets.splice(index, 1);
-                    return;
-                }
-                
-                const dx = bullet.target.x - bullet.x;
-                const dy = bullet.target.y - bullet.y;
-                const dist = Math.sqrt(dx*dx + dy*dy);
-                
-                if (dist < 10) {
-                    // Impacto
-                    bullet.target.health -= bullet.damage;
-                    
-                    // Efecto de ralentización para torre de hielo
-                    if (bullet.type === 'ice' && bullet.target.speed > 0.5) {
-                        bullet.target.speed *= 0.7;
-                    }
-                    
-                    if (bullet.target.health <= 0) {
-                        gold += bullet.target.bounty;
-                        points += 10;
-                        enemyKills++;
-                        enemies.splice(enemies.indexOf(bullet.target), 1);
-                    }
-                    bullets.splice(index, 1);
-                } else {
-                    // Mover bala hacia el objetivo
-                    bullet.x += dx / dist * 8;
-                    bullet.y += dy / dist * 8;
-                }
+            updateUI();
+            showMessage("¡Todas las torres mejoradas! +50% daño, +10% alcance, +10% velocidad", "success");
+        }
+        
+        function sellLastTower() {
+            if (towers.length === 0) {
+                showMessage("No tienes torres para vender", "error");
+                return;
+            }
+            
+            const lastTower = towers.pop();
+            const refund = Math.floor(lastTower.cost * 0.75);
+            gold += refund;
+            
+            updateUI();
+            showMessage(`Torre vendida por ${refund} oro (75% del costo)`, "info");
+        }
+        
+        function useSpecialPower() {
+            if (gems < 10) {
+                showMessage("No tienes suficientes gemas. Necesitas 10 gemas", "error");
+                return;
+            }
+            
+            gems -= 10;
+            
+            // Eliminar todos los enemigos actuales
+            let totalBounty = 0;
+            enemies.forEach(enemy => {
+                totalBounty += enemy.bounty;
+                enemyKills++;
             });
+            
+            gold += totalBounty;
+            enemies = [];
+            
+            updateUI();
+            showMessage(`¡Poder especial activado! +${totalBounty} oro`, "success");
         }
         
-        // 10. FUNCIONES AUXILIARES
-        function getTowerColor(type) {
-            const colors = {
-                archer: '#00ff88',
-                mage: '#ff00ff',
-                cannon: '#ff8800',
-                ice: '#00ffff'
-            };
-            return colors[type] || '#ffffff';
+        function buyItem(type, amount, cost) {
+            if (gems < cost) {
+                showMessage(`No tienes suficientes gemas. Necesitas ${cost} gemas`, "error");
+                return;
+            }
+            
+            gems -= cost;
+            
+            switch (type) {
+                case 'gold':
+                    gold += amount;
+                    showMessage(`+${amount} oro comprado`, "success");
+                    break;
+                    
+                case 'lives':
+                    lives += amount;
+                    showMessage(`+${amount} vidas compradas`, "success");
+                    break;
+                    
+                case 'damage':
+                    damageBoostActive = true;
+                    damageBoostEndTime = Date.now() + 30000; // 30 segundos
+                    showMessage("¡Boost de x2 daño activado por 30 segundos!", "success");
+                    break;
+            }
+            
+            updateUI();
         }
         
-        function showMessage(text) {
-            waveStatusEl.textContent = text;
-            setTimeout(() => {
-                if (!gameRunning) {
-                    waveStatusEl.textContent = `Preparando oleada ${wave + 1}...`;
-                }
-            }, 3000);
-        }
-        
-        // 11. FUNCIONES DE FIN DE JUEGO
-        function showVictory() {
+        // 15. FUNCIONES DE FIN DE JUEGO
+        function victory() {
+            gameRunning = false;
+            
             document.getElementById('gameOverTitle').textContent = '🏆 ¡VICTORIA!';
             document.getElementById('victoryIcon').textContent = '👑';
-            document.getElementById('gameOverMessage').textContent = `Has completado todas las ${maxWaves} oleadas!`;
+            document.getElementById('gameOverMessage').textContent = `¡Has completado todas las ${maxWaves} oleadas!`;
             document.getElementById('finalScore').textContent = `${points} Puntos`;
-            document.getElementById('finalWaves').textContent = wave;
+            document.getElementById('finalWaves').textContent = wave - 1;
             document.getElementById('finalTowers').textContent = towers.length;
             document.getElementById('finalEnemies').textContent = enemyKills;
+            
             gameOverScreen.style.display = 'flex';
         }
         
-        function showGameOver() {
+        function gameOver() {
+            gameRunning = false;
+            
             document.getElementById('gameOverTitle').textContent = '💀 GAME OVER';
             document.getElementById('victoryIcon').textContent = '😢';
             document.getElementById('gameOverMessage').textContent = 'Los enemigos han invadido tu reino';
@@ -1001,6 +1491,7 @@
             document.getElementById('finalWaves').textContent = wave;
             document.getElementById('finalTowers').textContent = towers.length;
             document.getElementById('finalEnemies').textContent = enemyKills;
+            
             gameOverScreen.style.display = 'flex';
         }
         
@@ -1018,171 +1509,78 @@
             selectedTower = null;
             damageBoostActive = false;
             waveTimer = 0;
+            
+            if (enemySpawnInterval) {
+                clearInterval(enemySpawnInterval);
+            }
+            
             gameOverScreen.style.display = 'none';
             updateUI();
-            createGridAndPath();
-            showMessage('¡Juego reiniciado! Construye torres y defiende tu reino');
+            createBuildZones();
+            
+            showMessage("¡Juego reiniciado! Selecciona una torre para comenzar", "info");
         }
         
-        // 12. BUCLE PRINCIPAL DEL JUEGO
-        function gameLoop(timestamp) {
-            updateTowers(timestamp);
-            updateGameElements();
-            drawGameElements();
-            checkWaveComplete();
+        function continueGame() {
+            maxWaves = 20;
+            gameOverScreen.style.display = 'none';
+            showMessage("¡Modo extendido activado! Sobrevive hasta la oleada 20", "success");
+        }
+        
+        function shareScore() {
+            const shareText = `¡Conseguí ${points} puntos en Kingdom Defense Pro! ¿Puedes superarme?`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Kingdom Defense Pro',
+                    text: shareText,
+                    url: window.location.href
+                });
+            } else {
+                // Fallback para navegadores que no soportan Web Share API
+                navigator.clipboard.writeText(shareText).then(() => {
+                    alert("¡Puntaje copiado al portapapeles! Compártelo donde quieras.");
+                });
+            }
+        }
+        
+        // 16. BUCLE PRINCIPAL DEL JUEGO
+        function gameLoop(currentTime) {
+            if (!lastTime) lastTime = currentTime;
+            const deltaTime = currentTime - lastTime;
+            lastTime = currentTime;
             
             // Actualizar temporizador entre oleadas
             if (waveTimer > 0 && !gameRunning) {
-                waveTimer--;
-                nextWaveTimerEl.textContent = waveTimer;
-                if (waveTimer === 0) {
-                    startNextWave();
+                waveTimer -= deltaTime / 1000;
+                if (waveTimer <= 0) {
+                    waveTimer = 0;
+                    waveStatusEl.textContent = "¡Preparado! Haz clic en 'Iniciar Oleada'";
                 }
+                nextWaveTimerEl.textContent = Math.ceil(waveTimer);
             }
             
+            // Actualizar elementos del juego
+            updateTowers(currentTime);
+            updateGameElements();
+            
+            // Dibujar todo
+            drawGameElements();
+            
+            // Continuar el bucle
             requestAnimationFrame(gameLoop);
         }
         
-        // ============================================
-        // INICIALIZACIÓN Y EVENTOS
-        // ============================================
-        document.addEventListener('DOMContentLoaded', function() {
-            // Crear grid y camino
-            createGridAndPath();
-            
-            // Selección de torres
-            document.querySelectorAll('.tower-card').forEach(card => {
-                card.addEventListener('click', function() {
-                    document.querySelectorAll('.tower-card').forEach(c => c.classList.remove('selected'));
-                    this.classList.add('selected');
-                    selectedTower = this.dataset.tower;
-                    showMessage(`Torre ${selectedTower} seleccionada. Haz clic en una zona verde para construir`);
-                });
-            });
-            
-            // Botón de iniciar oleada
-            document.getElementById('startWave').addEventListener('click', startNextWave);
-            
-            // Botón de mejorar todas las torres
-            document.getElementById('upgradeAll').addEventListener('click', function() {
-                if (gold >= 200 && towers.length > 0) {
-                    towers.forEach(tower => {
-                        tower.damage *= 1.5;
-                        tower.range *= 1.2;
-                        tower.fireRate *= 0.9; // Dispara más rápido
-                        tower.level++;
-                    });
-                    gold -= 200;
-                    updateUI();
-                    showMessage('¡Todas las torres mejoradas! +50% daño, +20% alcance');
-                } else if (towers.length === 0) {
-                    alert('¡No tienes torres para mejorar!');
-                } else {
-                    alert('¡No tienes suficiente oro! Necesitas 200 oro');
-                }
-            });
-            
-            // Botón de vender torre
-            document.getElementById('sellTower').addEventListener('click', function() {
-                if (selectedTower) {
-                    // Buscar torre seleccionada para vender
-                    const towerIndex = towers.findIndex(t => t.type === selectedTower);
-                    if (towerIndex !== -1) {
-                        const tower = towers[towerIndex];
-                        const refund = Math.floor(towerStats[tower.type].cost * 0.75);
-                        gold += refund;
-                        towers.splice(towerIndex, 1);
-                        updateUI();
-                        showMessage(`Torre vendida por ${refund} oro (75% del costo)`);
-                    } else {
-                        alert('Selecciona una torre en el mapa para vender');
-                    }
-                } else {
-                    alert('Selecciona una torre primero');
-                }
-            });
-            
-            // Botón de poder especial
-            document.getElementById('specialPower').addEventListener('click', function() {
-                if (gems >= 10) {
-                    gems -= 10;
-                    // Elimina todos los enemigos actuales
-                    enemies.forEach(enemy => {
-                        gold += enemy.bounty;
-                        points += 10;
-                        enemyKills++;
-                    });
-                    enemies = [];
-                    updateUI();
-                    showMessage('¡Poder especial activado! Todos los enemigos eliminados');
-                } else {
-                    alert('¡No tienes suficientes gemas! Necesitas 10 gemas');
-                }
-            });
-            
-            // Botones de la tienda
-            document.getElementById('buyGold').addEventListener('click', function() {
-                if (gems >= 5) {
-                    gems -= 5;
-                    gold += 500;
-                    updateUI();
-                    showMessage('+500 oro comprado por 5 gemas');
-                } else {
-                    alert('¡No tienes suficientes gemas! Necesitas 5 gemas');
-                }
-            });
-            
-            document.getElementById('buyLives').addEventListener('click', function() {
-                if (gems >= 8) {
-                    gems -= 8;
-                    lives += 10;
-                    updateUI();
-                    showMessage('+10 vidas compradas por 8 gemas');
-                } else {
-                    alert('¡No tienes suficientes gemas! Necesitas 8 gemas');
-                }
-            });
-            
-            document.getElementById('buyDamage').addEventListener('click', function() {
-                if (gems >= 15) {
-                    gems -= 15;
-                    damageBoostActive = true;
-                    damageBoostEndTime = Date.now() + 30000; // 30 segundos
-                    updateUI();
-                    showMessage('¡Boost de x2 daño activado por 30 segundos!');
-                } else {
-                    alert('¡No tienes suficientes gemas! Necesitas 15 gemas');
-                }
-            });
-            
-            // Botones de game over
-            document.getElementById('playAgain').addEventListener('click', resetGame);
-            
-            document.getElementById('continueGame').addEventListener('click', function() {
-                maxWaves = 20;
-                gameOverScreen.style.display = 'none';
-                showMessage('¡Modo extendido activado! Sobrevive hasta la oleada 20');
-            });
-            
-            document.getElementById('shareScore').addEventListener('click', function() {
-                const shareText = `¡He conseguido ${points} puntos en Kingdom Defense Pro! ¿Puedes superarme?`;
-                if (navigator.share) {
-                    navigator.share({
-                        title: 'Kingdom Defense Pro',
-                        text: shareText,
-                        url: window.location.href
-                    });
-                } else {
-                    alert('Copia este texto para compartir:\n\n' + shareText);
-                }
-            });
-            
-            // Inicializar UI
-            updateUI();
-            
-            // Iniciar bucle del juego
-            requestAnimationFrame(gameLoop);
-        });
+        // 17. INICIAR EL JUEGO CUANDO EL DOCUMENTO ESTÉ LISTO
+        document.addEventListener('DOMContentLoaded', initGame);
+        
+        // 18. TELEMETRÍA PARA DEPURACIÓN
+        console.log("Kingdom Defense Pro - Código cargado correctamente");
+        console.log("Instrucciones:");
+        console.log("1. Selecciona una torre del panel derecho");
+        console.log("2. Haz clic en una zona verde del mapa para construir");
+        console.log("3. Haz clic en 'Iniciar Oleada' para comenzar");
+        console.log("4. Usa las gemas para comprar mejoras en la tienda");
     </script>
 </body>
 </html>
