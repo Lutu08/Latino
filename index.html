@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kingdom Defense - Juego de Estrategia</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: white;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border: 2px solid #00b4d8;
+        }
+        
+        h1 {
+            color: #00b4d8;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(0, 180, 216, 0.5);
+        }
+        
+        .game-area {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .game-board {
+            flex: 3;
+            min-width: 300px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            padding: 20px;
+            border: 2px solid #00b4d8;
+        }
+        
+        .game-info {
+            flex: 1;
+            min-width: 250px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            padding: 20px;
+            border: 2px solid #ff9e00;
+        }
+        
+        #gameCanvas {
+            width: 100%;
+            height: 500px;
+            background: #1a1a2e;
+            border-radius: 10px;
+            border: 2px solid #ff9e00;
+            display: block;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            background: rgba(255, 158, 0, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #ff9e00;
+        }
+        
+        .towers {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .tower-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .tower-card:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: #00b4d8;
+        }
+        
+        .tower-card.selected {
+            border-color: #ff9e00;
+            background: rgba(255, 158, 0, 0.2);
+        }
+        
+        .tower-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .tower-cost {
+            color: #ff9e00;
+            font-weight: bold;
+        }
+        
+        .ad-container {
+            background: rgba(255, 255, 255, 0.9);
+            color: black;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+            border: 2px dashed #ff9e00;
+        }
+        
+        .ad-title {
+            color: #ff9e00;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .btn {
+            background: linear-gradient(45deg, #ff9e00, #ff6b00);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(255, 158, 0, 0.4);
+        }
+        
+        .btn-premium {
+            background: linear-gradient(45deg, #9d4edd, #560bad);
+        }
+        
+        .shop {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 30px;
+            border: 2px solid #9d4edd;
+        }
+        
+        .shop-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .shop-item {
+            background: rgba(157, 78, 221, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .gem {
+            color: #9d4edd;
+            font-weight: bold;
+        }
+        
+        .game-over {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .game-over-content {
+            background: #1a1a2e;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            border: 3px solid #00b4d8;
+            max-width: 500px;
+            width: 90%;
+        }
+        
+        @media (max-width: 768px) {
+            .game-area {
+                flex-direction: column;
+            }
+            
+            #gameCanvas {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏰 KINGDOM DEFENSE</h1>
+            <p>Protege tu reino de las oleadas de enemigos - Juego de Estrategia</p>
+        </header>
+        
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-label">Oro</div>
+                <div class="stat-value" id="gold">500</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Oleada</div>
+                <div class="stat-value" id="wave">1</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Vidas</div>
+                <div class="stat-value" id="lives">20</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Puntos</div>
+                <div class="stat-value" id="points">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Gemas</div>
+                <div class="stat-value" id="gems">10</div>
+            </div>
+        </div>
+        
+        <div class="game-area">
+            <div class="game-board">
+                <canvas id="gameCanvas" width="800" height="500"></canvas>
+                
+                <div style="margin-top: 20px; text-align: center;">
+                    <button class="btn" id="startWave">
+                        <span>▶️</span> Iniciar Oleada
+                    </button>
+                    <button class="btn" id="upgradeTowers">
+                        <span>⚡</span> Mejorar Todas (100 oro)
+                    </button>
+                    <button class="btn btn-premium" id="buyGems">
+                        <span>💎</span> Comprar Gemas
+                    </button>
+                </div>
+                
+                <!-- Zona de anuncios -->
+                <div class="ad-container">
+                    <div class="ad-title">📢 ANUNCIO PATROCINADO</div>
+                    <p>Ver anuncio por 50 gemas extra</p>
+                    <button class="btn" id="watchAd">
+                        <span>📺</span> Ver Anuncio (30s)
+                    </button>
+                    <p style="font-size: 0.8rem; margin-top: 10px;">Ayuda a mantener el juego gratis</p>
+                </div>
+            </div>
+            
+            <div class="game-info">
+                <h2 style="color: #ff9e00; margin-bottom: 20px;">🏗️ Construir Torres</h2>
+                
+                <div class="towers">
+                    <div class="tower-card" data-tower="archer" data-cost="100">
+                        <div class="tower-icon">🏹</div>
+                        <div class="tower-name">Arquero</div>
+                        <div class="tower-cost">100 oro</div>
+                        <div class="tower-desc">Ataque rápido</div>
+                    </div>
+                    
+                    <div class="tower-card" data-tower="mage" data-cost="200">
+                        <div class="tower-icon">🔮</div>
+                        <div class="tower-name">Mago</div>
+                        <div class="tower-cost">200 oro</div>
+                        <div class="tower-desc">Daño mágico</div>
+                    </div>
+                    
+                    <div class="tower-card" data-tower="cannon" data-cost="300">
+                        <div class="tower-icon">💣</div>
+                        <div class="tower-name">Cañón</div>
+                        <div class="tower-cost">300 oro</div>
+                        <div class="tower-desc">Área de efecto</div>
+                    </div>
+                    
+                    <div class="tower-card" data-tower="ice" data-cost="250">
+                        <div class="tower-icon">❄️</div>
+                        <div class="tower-name">Torre de Hielo</div>
+                        <div class="tower-cost">250 oro</div>
+                        <div class="tower-desc">Ralentiza enemigos</div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 30px;">
+                    <h3 style="color: #00b4d8; margin-bottom: 15px;">🎯 Instrucciones</h3>
+                    <ul style="list-style: none; padding-left: 0;">
+                        <li style="margin-bottom: 8px;">1. Selecciona una torre</li>
+                        <li style="margin-bottom: 8px;">2. Haz clic en el mapa para construir</li>
+                        <li style="margin-bottom: 8px;">3. Mejora torres con el oro</li>
+                        <li style="margin-bottom: 8px;">4. Sobrevive a 10 oleadas para ganar</li>
+                    </ul>
+                </div>
+                
+                <div class="shop">
+                    <h2 style="color: #9d4edd; margin-bottom: 15px;">🛒 Tienda Premium</h2>
+                    
+                    <div class="shop-items">
+                        <div class="shop-item">
+                            <div style="font-size: 1.5rem;">💎</div>
+                            <div>50 Gemas</div>
+                            <div style="margin: 10px 0;">$1.99 USD</div>
+                            <button class="btn btn-premium buy-gem" data-gems="50">
+                                Comprar
+                            </button>
+                        </div>
+                        
+                        <div class="shop-item">
+                            <div style="font-size: 1.5rem;">💎💎</div>
+                            <div>120 Gemas</div>
+                            <div style="margin: 10px 0;">$3.99 USD</div>
+                            <button class="btn btn-premium buy-gem" data-gems="120">
+                                Comprar
+                            </button>
+                        </div>
+                        
+                        <div class="shop-item">
+                            <div style="font-size: 1.5rem;">👑</div>
+                            <div>VIP Mensual</div>
+                            <div style="margin: 10px 0;">$4.99 USD/mes</div>
+                            <button class="btn btn-premium" id="vip">
+                                Suscribirse
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px; padding: 20px; background: rgba(0,0,0,0.5); border-radius: 10px;">
+            <p>🎮 <strong>Juego de estrategia 100% legal</strong> - No es un casino - No hay apuestas con dinero real</p>
+            <p style="font-size: 0.9rem; margin-top: 10px;">Los pagos son opcionales para ventajas premium. Juega gratis sin límites.</p>
+        </div>
+    </div>
+    
+    <!-- Pantalla de Game Over -->
+    <div class="game-over" id="gameOver">
+        <div class="game-over-content">
+            <h2 id="gameOverTitle" style="color: #ff9e00; margin-bottom: 20px;">🏆 ¡Victoria!</h2>
+            <div style="font-size: 4rem; margin: 20px 0;">👑</div>
+            <p id="gameOverMessage">Has completado todas las oleadas</p>
+            <div style="font-size: 2rem; color: #ff9e00; margin: 20px 0;" id="finalScore">Puntos: 0</div>
+            
+            <div style="margin: 30px 0;">
+                <button class="btn" id="playAgain">
+                    <span>🔄</span> Jugar Otra Vez
+                </button>
+                <button class="btn btn-premium" id="shareScore">
+                    <span>📤</span> Compartir Puntaje
+                </button>
+            </div>
+            
+            <div class="ad-container" style="margin-top: 20px;">
+                <p>¿Quieres el doble de puntos para el próximo juego?</p>
+                <button class="btn" id="doublePoints">
+                    <span>📺</span> Ver Anuncio (2x Puntos)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables del juego
+        let gold = 500;
+        let wave = 1;
+        let lives = 20;
+        let points = 0;
+        let gems = 10;
+        let gameRunning = false;
+        let selectedTower = null;
+        let towers = [];
+        let enemies = [];
+        let bullets = [];
+        
+        // Referencias a elementos del DOM
+        const goldEl = document.getElementById('gold');
+        const waveEl = document.getElementById('wave');
+        const livesEl = document.getElementById('lives');
+        const pointsEl = document.getElementById('points');
+        const gemsEl = document.getElementById('gems');
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const gameOverScreen = document.getElementById('gameOver');
+        
+        // Configuración del juego
+        const GRID_SIZE = 40;
+        const GRID_WIDTH = Math.floor(canvas.width / GRID_SIZE);
+        const GRID_HEIGHT = Math.floor(canvas.height / GRID_SIZE);
+        
+        // Torres disponibles
+        const TOWER_TYPES = {
+            archer: { color: '#4CAF50', range: 150, damage: 10, speed: 20, cost: 100 },
+            mage: { color: '#9C27B0', range: 200, damage: 25, speed: 40, cost: 200 },
+            cannon: { color: '#FF9800', range: 120, damage: 40, speed: 60, cost: 300 },
+            ice: { color: '#00BCD4', range: 180, damage: 5, speed: 30, cost: 250 }
+        };
+        
+        // Enemigos
+        const ENEMY_TYPES = [
+            { color: '#FF5252', speed: 1, health: 30, reward: 10 },
+            { color: '#FF4081', speed: 1.5, health: 20, reward: 15 },
+            { color: '#E040FB', speed: 2, health: 15, reward: 20 },
+            { color: '#536DFE', speed: 1.2, health: 50, reward: 30 }
+        ];
+        
+        // Actualizar estadísticas en pantalla
+        function updateStats() {
+            goldEl.textContent = gold;
+            waveEl.textContent = wave;
+            livesEl.textContent = lives;
+            pointsEl.textContent = points;
+            gemsEl.textContent = gems;
+        }
+        
+        // Inicializar el juego
+        function initGame() {
+            towers = [];
+            enemies = [];
+            bullets = [];
+            gold = 500;
+            wave = 1;
+            lives = 20;
+            points = 0;
+            gameRunning = false;
+            updateStats();
+            
+            // Dibujar el camino
+            drawPath();
+        }
+        
+        // Dibujar camino en el mapa
+        function drawPath() {
+            ctx.fillStyle = '#795548';
+            
+            // Camino básico
+            for(let x = 2; x < GRID_WIDTH - 2; x++) {
+                ctx.fillRect(x * GRID_SIZE, 3 * GRID_SIZE, GRID_SIZE, GRID_SIZE);
+            }
+            
+            for(let y = 3; y < GRID_HEIGHT - 3; y++) {
+                ctx.fillRect((GRID_WIDTH - 3) * GRID_SIZE, y * GRID_SIZE, GRID_SIZE, GRID_SIZE);
+            }
+            
+            // Base del jugador
+            ctx.fillStyle = '#00b4d8';
+            ctx.fillRect((GRID_WIDTH - 4) * GRID_SIZE, (GRID_HEIGHT - 4) * GRID_SIZE, GRID_SIZE * 2, GRID_SIZE * 2);
+            
+            // Punto de entrada de enemigos
+            ctx.fillStyle = '#ff5252';
+            ctx.fillRect(0, 3 * GRID_SIZE, GRID_SIZE, GRID_SIZE);
+        }
+        
+        // Dibujar el estado actual del juego
+        function drawGame() {
+            // Limpiar canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Dibujar fondo de cuadrícula
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            for(let x = 0; x <= canvas.width; x += GRID_SIZE) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            for(let y = 0; y <= canvas.height; y += GRID_SIZE) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+            
+            // Dibujar camino
+            drawPath();
+            
+            // Dibujar torres
+            towers.forEach(tower => {
+                ctx.fillStyle = tower.color;
+                ctx.beginPath();
+                ctx.arc(tower.x, tower.y, 15, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Rango de la torre (solo si está seleccionada)
+                if (tower.selected) {
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(tower.x, tower.y, tower.range, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+                
+                // Nivel de la torre
+                ctx.fillStyle = 'white';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(`Lv${tower.level}`, tower.x, tower.y + 5);
+            });
+            
+            // Dibujar enemigos
+            enemies.forEach(enemy => {
+                ctx.fillStyle = enemy.color;
+                ctx.beginPath();
+                ctx.arc(enemy.x, enemy.y, 12, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Barra de vida
+                const healthWidth = 30;
+                const healthPercent = enemy.health / enemy.maxHealth;
+                
+                ctx.fillStyle = '#ff5252';
+                ctx.fillRect(enemy.x - healthWidth/2, enemy.y - 20, healthWidth, 4);
+                
+                ctx.fillStyle = '#4CAF50';
+                ctx.fillRect(enemy.x - healthWidth/2, enemy.y - 20, healthWidth * healthPercent, 4);
+            });
+            
+            // Dibujar balas
+            bullets.forEach(bullet => {
+                ctx.fillStyle = bullet.color;
+                ctx.beginPath();
+                ctx.arc(bullet.x, bullet.y, 4, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+        
+        // Crear una nueva oleada de enemigos
+        function spawnWave() {
+            const enemyCount = 5 + wave * 2;
+            
+            for(let i = 0; i < enemyCount; i++) {
+                const enemyType = ENEMY_TYPES[Math.min(wave - 1, ENEMY_TYPES.length - 1)];
+                
+                enemies.push({
+                    x: 0,
+                    y: 3 * GRID_SIZE + GRID_SIZE/2,
+                    type: enemyType,
+                    color: enemyType.color,
+                    speed: enemyType.speed,
+                    health: enemyType.health,
+                    maxHealth: enemyType.health,
+                    reward: enemyType.reward,
+                    pathIndex: 0
+                });
+            }
+            
+            wave++;
+            updateStats();
+        }
+        
+        // Actualizar lógica del juego
+        function updateGame() {
+            if (!gameRunning) return;
+            
+            // Mover enemigos
+            enemies.forEach((enemy, index) => {
+                // Camino simple
+                if (enemy.x < (GRID_WIDTH - 3) * GRID_SIZE) {
+                    enemy.x += enemy.speed;
+                } else if (enemy.y < (GRID_HEIGHT - 3) * GRID_SIZE) {
+                    enemy.y += enemy.speed;
+                } else {
+                    // Enemigo llegó a la base
+                    enemies.splice(index, 1);
+                    lives--;
+                    
+                    if (lives <= 0) {
+                        endGame(false);
+                    }
+                    
+                    updateStats();
+                }
+            });
+            
+            // Actualizar torres
+            towers.forEach(tower => {
+                tower.cooldown--;
+                
+                // Encontrar enemigo en rango
+                const target = enemies.find(enemy => {
+                    const dx = enemy.x - tower.x;
+                    const dy = enemy.y - tower.y;
+                    return Math.sqrt(dx*dx + dy*dy) <= tower.range;
+                });
+                
+                if (target && tower.cooldown <= 0) {
+                    // Disparar
+                    bullets.push({
+                        x: tower.x,
+                        y: tower.y,
+                        target: target,
+                        damage: tower.damage,
+                        color: tower.color,
+                        speed: 5
+                    });
+                    
+                    tower.cooldown = tower.speed;
+                }
+            });
+            
+            // Actualizar balas
+            bullets.forEach((bullet, index) => {
+                if (!bullet.target || bullet.target.health <= 0) {
+                    bullets.splice(index, 1);
+                    return;
+                }
+                
+                // Mover hacia el objetivo
+                const dx = bullet.target.x - bullet.x;
+                const dy = bullet.target.y - bullet.y;
+                const distance = Math.sqrt(dx*dx + dy*dy);
+                
+                if (distance < 10) {
+                    // Golpear al objetivo
+                    bullet.target.health -= bullet.damage;
+                    
+                    if (bullet.target.health <= 0) {
+                        // Enemigo derrotado
+                        gold += bullet.target.reward;
+                        points += bullet.target.reward * 10;
+                        
+                        const enemyIndex = enemies.indexOf(bullet.target);
+                        if (enemyIndex > -1) {
+                            enemies.splice(enemyIndex, 1);
+                        }
+                        
+                        // Si no quedan enemigos, pasar a siguiente oleada
+                        if (enemies.length === 0 && wave <= 10) {
+                            spawnWave();
+                        }
+                        
+                        // Comprobar victoria
+                        if (wave > 10 && enemies.length === 0) {
+                            endGame(true);
+                        }
+                    }
+                    
+                    bullets.splice(index, 1);
+                } else {
+                    bullet.x += (dx / distance) * bullet.speed;
+                    bullet.y += (dy / distance) * bullet.speed;
+                }
+            });
+            
+            drawGame();
+        }
+        
+        // Finalizar juego
+        function endGame(victory) {
+            gameRunning = false;
+            
+            const title = document.getElementById('gameOverTitle');
+            const message = document.getElementById('gameOverMessage');
+            const score = document.getElementById('finalScore');
+            
+            if (victory) {
+                title.textContent = '🏆 ¡Victoria!';
+                message.textContent = `Has defendido el reino por ${wave-1} oleadas`;
+                points += 1000; // Bono por victoria
+            } else {
+                title.textContent = '💀 Game Over';
+                message.textContent = 'Los enemigos han conquistado tu reino';
+            }
+            
+            score.textContent = `Puntos: ${points}`;
+            gameOverScreen.style.display = 'flex';
+            updateStats();
+        }
+        
+        // Construir torre
+        function buildTower(x, y) {
+            if (!selectedTower || gold < selectedTower.cost) return false;
+            
+            // Verificar que no haya otra torre en esa posición
+            const gridX = Math.floor(x / GRID_SIZE);
+            const gridY = Math.floor(y / GRID_SIZE);
+            
+            const towerExists = towers.some(tower => {
+                const tGridX = Math.floor(tower.x / GRID_SIZE);
+                const tGridY = Math.floor(tower.y / GRID_SIZE);
+                return tGridX === gridX && tGridY === gridY;
+            });
+            
+            if (towerExists) {
+                alert('Ya hay una torre en esta posición');
+                return false;
+            }
+            
+            // Verificar que no sea en el camino
+            if (
+                (gridY === 3 && gridX >= 2 && gridX < GRID_WIDTH - 2) ||
+                (gridX === GRID_WIDTH - 3 && gridY >= 3 && gridY < GRID_HEIGHT - 3)
+            ) {
+                alert('No puedes construir en el camino');
+                return false;
+            }
+            
+            const towerType = TOWER_TYPES[selectedTower.type];
+            towers.push({
+                x: gridX * GRID_SIZE + GRID_SIZE/2,
+                y: gridY * GRID_SIZE + GRID_SIZE/2,
+                type: selectedTower.type,
+                color: towerType.color,
+                range: towerType.range,
+                damage: towerType.damage,
+                speed: towerType.speed,
+                level: 1,
+                cooldown: 0,
+                selected: false
+            });
+            
+            gold -= selectedTower.cost;
+            updateStats();
+            drawGame();
+            return true;
+        }
+        
+        // Mejorar todas las torres
+        function upgradeAllTowers() {
+            if (gold < 100) {
+                alert('No tienes suficiente oro');
+                return;
+            }
+            
+            let upgraded = false;
+            towers.forEach(tower => {
+                if (tower.level < 5) {
+                    tower.level++;
+                    tower.damage *= 1.5;
+                    tower.range *= 1.1;
+                    tower.speed *= 0.9; // Dispara más rápido
+                    upgraded = true;
+                }
+            });
+            
+            if (upgraded) {
+                gold -= 100;
+                updateStats();
+                drawGame();
+                alert('Todas las torres mejoradas al siguiente nivel');
+            } else {
+                alert('Todas las torres ya están al nivel máximo');
+            }
+        }
+        
+        // Event Listeners
+        document.querySelectorAll('.tower-card').forEach(card => {
+            card.addEventListener('click', function() {
+                document.querySelectorAll('.tower-card').forEach(c => c.classList.remove('selected'));
+                this.classList.add('selected');
+                
+                selectedTower = {
+                    type: this.dataset.tower,
+                    cost: parseInt(this.dataset.cost)
+                };
+            });
+        });
+        
+        canvas.addEventListener('click', function(event) {
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            
+            if (buildTower(x, y)) {
+                // Torre construida exitosamente
+            }
+        });
+        
+        document.getElementById('startWave').addEventListener('click', function() {
+            if (!gameRunning) {
+                gameRunning = true;
+                if (enemies.length === 0) {
+                    spawnWave();
+                }
+                alert('¡La oleada ha comenzado! Protege tu reino.');
+            }
+        });
+        
+        document.getElementById('upgradeTowers').addEventListener('click', upgradeAllTowers);
+        
+        document.getElementById('buyGems').addEventListener('click', function() {
+            alert('Opción de compra de gemas - En un juego real, aquí se integraría con Stripe/PayPal');
+        });
+        
+        document.getElementById('watchAd').addEventListener('click', function() {
+            if (confirm('¿Ver un anuncio de 30 segundos por 50 gemas extra?')) {
+                // Simular anuncio
+                setTimeout(() => {
+                    gems += 50;
+                    updateStats();
+                    alert('¡Anuncio completado! +50 gemas');
+                }, 1000);
+            }
+        });
+        
+        document.querySelectorAll('.buy-gem').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const gemCount = parseInt(this.dataset.gems);
+                const price = gemCount === 50 ? 1.99 : 3.99;
+                
+                if (confirm(`¿Comprar ${gemCount} gemas por $${price} USD?`)) {
+                    // En un juego real, aquí iría la integración de pago
+                    gems += gemCount;
+                    updateStats();
+                    alert(`¡Compra exitosa! +${gemCount} gemas añadidas a tu cuenta.`);
+                }
+            });
+        });
+        
+        document.getElementById('vip').addEventListener('click', function() {
+            if (confirm('¿Suscribirte a VIP por $4.99 USD/mes?\n\nBeneficios:\n✅ Doble recompensas\n✅ Sin anuncios\n✅ Torre exclusiva')) {
+                alert('¡Suscripción VIP activada! (simulación)');
+            }
+        });
+        
+        document.getElementById('playAgain').addEventListener('click', function() {
+            gameOverScreen.style.display = 'none';
+            initGame();
+            drawGame();
+        });
+        
+        document.getElementById('shareScore').addEventListener('click', function() {
+            const shareText = `¡Conseguí ${points} puntos en Kingdom Defense! ¿Puedes superarme?`;
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Kingdom Defense',
+                    text: shareText,
+                    url: window.location.href
+                });
+            } else {
+                prompt('Copia este enlace para compartir:', shareText + ' ' + window.location.href);
+            }
+        });
+        
+        document.getElementById('doublePoints').addEventListener('click', function() {
+            if (confirm('¿Ver anuncio para duplicar tus puntos en el próximo juego?')) {
+                // Simular anuncio
+                setTimeout(() => {
+                    localStorage.setItem('doublePoints', 'true');
+                    alert('¡Listo! Tu próximo juego dará el doble de puntos.');
+                }, 1000);
+            }
+        });
+        
+        // Iniciar el juego
+        initGame();
+        drawGame();
+        
+        // Bucle del juego
+        setInterval(updateGame, 50);
+        
+        // Mostrar mensaje de bienvenida
+        setTimeout(() => {
+            alert('🎮 BIENVENIDO A KINGDOM DEFENSE\n\n1. Selecciona una torre\n2. Construye en el mapa\n3. Inicia la oleada\n4. Sobrevive a 10 oleadas para ganar\n\n¡Estrategia pura, sin azar!');
+        }, 500);
+    </script>
+</body>
+</html>
