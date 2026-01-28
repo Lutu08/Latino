@@ -3,18 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Galaxy Defense - Juego de Defensa Espacial</title>
+    <title>Hyper Idle Clicker Evolution | Juego Incremental</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        :root {
+            --primary: #7c3aed;
+            --secondary: #f59e0b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --dark: #1e293b;
+            --darker: #0f172a;
+            --light: #f1f5f9;
+            --premium: #fbbf24;
+        }
+        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Arial', sans-serif;
         }
         
         body {
-            background: linear-gradient(135deg, #000428, #004e92, #0f0c29);
-            color: white;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, var(--darker), #1e1b4b);
+            color: var(--light);
             min-height: 100vh;
             overflow-x: hidden;
         }
@@ -25,190 +37,26 @@
             padding: 20px;
         }
         
-        header {
-            text-align: center;
-            padding: 30px;
-            background: linear-gradient(90deg, #00c9ff, #92fe9d, #ff7e5f);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+        /* Header con estadísticas */
+        .header {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
             margin-bottom: 30px;
-            position: relative;
-        }
-        
-        header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 20, 40, 0.5);
+            background: rgba(30, 41, 59, 0.8);
+            padding: 20px;
             border-radius: 20px;
-            z-index: -1;
-            border: 2px solid #00c9ff;
-            box-shadow: 0 0 50px rgba(0, 201, 255, 0.5);
-        }
-        
-        h1 {
-            font-size: 3.5rem;
-            margin-bottom: 10px;
-            text-shadow: 3px 3px 0 #000;
-            letter-spacing: 2px;
-            animation: titleGlow 2s infinite alternate;
-        }
-        
-        @keyframes titleGlow {
-            from { text-shadow: 3px 3px 0 #000, 0 0 20px #00c9ff; }
-            to { text-shadow: 3px 3px 0 #000, 0 0 30px #92fe9d, 0 0 40px #ff7e5f; }
-        }
-        
-        .game-container {
-            display: grid;
-            grid-template-columns: 1fr 300px;
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        
-        .game-board {
-            background: rgba(0, 10, 30, 0.8);
-            border-radius: 15px;
-            padding: 15px;
-            border: 3px solid #00c9ff;
-            box-shadow: 0 0 30px rgba(0, 201, 255, 0.3);
-            position: relative;
-            overflow: hidden;
-            min-height: 600px;
-        }
-        
-        .game-board::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                radial-gradient(circle at 20% 30%, rgba(0, 201, 255, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 70%, rgba(146, 254, 157, 0.1) 0%, transparent 50%);
-            pointer-events: none;
-        }
-        
-        #gameCanvas {
-            width: 100%;
-            height: 600px;
-            background: linear-gradient(135deg, #000428, #004e92);
-            border-radius: 10px;
-            border: 2px solid #92fe9d;
-            display: block;
-            cursor: crosshair;
-        }
-        
-        .grid-overlay {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            right: 15px;
-            bottom: 15px;
-            display: grid;
-            grid-template-columns: repeat(8, 1fr);
-            grid-template-rows: repeat(6, 1fr);
-            gap: 2px;
-            pointer-events: none;
-            z-index: 1;
-        }
-        
-        .grid-cell {
-            border: 1px dashed rgba(0, 201, 255, 0.3);
-            transition: all 0.3s;
-        }
-        
-        .grid-cell.valid {
-            background: rgba(0, 201, 255, 0.1);
-            border-color: rgba(146, 254, 157, 0.5);
-        }
-        
-        .grid-cell.invalid {
-            background: rgba(255, 126, 95, 0.1);
-            border-color: rgba(255, 126, 95, 0.5);
-        }
-        
-        .tower-placed {
-            position: absolute;
-            width: 80px;
-            height: 80px;
-            border-radius: 10px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            transition: transform 0.3s, box-shadow 0.3s;
-            z-index: 2;
-        }
-        
-        .tower-placed:hover {
-            transform: scale(1.1);
-            box-shadow: 0 0 20px currentColor;
-        }
-        
-        .tower-placed.selected {
-            box-shadow: 0 0 30px gold;
-            z-index: 3;
-        }
-        
-        .tower-level {
-            position: absolute;
-            top: -10px;
-            right: -10px;
-            background: gold;
-            color: black;
-            width: 25px;
-            height: 25px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 12px;
-            border: 2px solid white;
-        }
-        
-        .enemy {
-            position: absolute;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            transition: left 0.1s linear, top 0.1s linear;
-            z-index: 2;
-        }
-        
-        .projectile {
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            z-index: 1;
-        }
-        
-        .stats-bar {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 10px;
-            margin-bottom: 20px;
+            border: 2px solid var(--primary);
+            box-shadow: 0 10px 30px rgba(124, 58, 237, 0.3);
         }
         
         .stat-card {
-            background: linear-gradient(135deg, #1a2980, #26d0ce);
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(245, 158, 11, 0.1));
             padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            border: 2px solid #ff7e5f;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             transition: transform 0.3s;
         }
         
@@ -216,21 +64,9 @@
             transform: translateY(-5px);
         }
         
-        .stat-card.premium {
-            background: linear-gradient(135deg, #8E2DE2, #4A00E0);
-        }
-        
-        .stat-card.danger {
-            background: linear-gradient(135deg, #FF416C, #FF4B2B);
-        }
-        
-        .stat-card.success {
-            background: linear-gradient(135deg, #00b09b, #96c93d);
-        }
-        
         .stat-label {
             font-size: 0.9rem;
-            color: rgba(255, 255, 255, 0.9);
+            color: #94a3b8;
             margin-bottom: 5px;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -239,1375 +75,1502 @@
         .stat-value {
             font-size: 2rem;
             font-weight: bold;
-            color: #ffd700;
-            text-shadow: 2px 2px 0 #000;
+            color: var(--premium);
+            text-shadow: 0 0 10px currentColor;
         }
         
-        .controls-sidebar {
-            background: rgba(0, 10, 30, 0.9);
-            border-radius: 15px;
-            padding: 20px;
-            border: 3px solid #8E2DE2;
-            box-shadow: 0 0 30px rgba(142, 45, 226, 0.3);
-            overflow-y: auto;
-            max-height: 600px;
-        }
-        
-        .tower-options {
-            display: grid;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        
-        .tower-card {
-            background: linear-gradient(135deg, #1e3c72, #2a5298);
-            padding: 15px;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s;
-            border: 2px solid transparent;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .tower-card:hover {
-            transform: translateX(5px);
-            border-color: #00c9ff;
-            box-shadow: 0 5px 15px rgba(0, 201, 255, 0.4);
-        }
-        
-        .tower-card.selected {
-            border-color: #ff7e5f;
-            background: linear-gradient(135deg, #2a5298, #1e3c72);
-            box-shadow: 0 0 20px rgba(255, 126, 95, 0.5);
-        }
-        
-        .tower-icon {
-            font-size: 2rem;
-            margin-bottom: 10px;
-            filter: drop-shadow(0 0 5px currentColor);
-        }
-        
-        .tower-name {
-            font-weight: bold;
-            margin-bottom: 5px;
-            color: #92fe9d;
-        }
-        
-        .tower-cost {
-            color: #ffd700;
-            font-weight: bold;
-            font-size: 1.2rem;
-        }
-        
-        .tower-stats {
-            font-size: 0.8rem;
-            color: #aaa;
-            display: flex;
-            gap: 10px;
+        .stat-subvalue {
+            font-size: 0.9rem;
+            color: #cbd5e1;
             margin-top: 5px;
         }
         
-        .btn {
-            background: linear-gradient(45deg, #00c9ff, #92fe9d);
-            color: #000;
+        /* Área principal del juego */
+        .game-area {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 1024px) {
+            .game-area {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Clicker principal */
+        .clicker-section {
+            background: rgba(30, 41, 59, 0.9);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            border: 2px solid var(--secondary);
+            position: sticky;
+            top: 20px;
+            height: fit-content;
+        }
+        
+        .clicker-title {
+            font-size: 1.8rem;
+            color: var(--secondary);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .clicker-button {
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), #8b5cf6);
+            border: 6px solid var(--premium);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            color: white;
+            cursor: pointer;
+            margin: 0 auto 30px;
+            transition: all 0.1s;
+            user-select: none;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+        
+        .clicker-button:active {
+            transform: scale(0.95);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .clicker-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        /* Sección de generadores */
+        .generators-section {
+            background: rgba(30, 41, 59, 0.9);
+            border-radius: 20px;
+            padding: 25px;
+            border: 2px solid var(--success);
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            color: var(--success);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .generator-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+        
+        .generator-card {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(30, 41, 59, 0.8));
+            border-radius: 15px;
+            padding: 20px;
+            border: 2px solid rgba(16, 185, 129, 0.5);
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .generator-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--success);
+            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
+        }
+        
+        .generator-card.disabled {
+            opacity: 0.5;
+            filter: grayscale(1);
+            cursor: not-allowed;
+        }
+        
+        .generator-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+        
+        .generator-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: var(--light);
+        }
+        
+        .generator-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: #94a3b8;
+            margin-bottom: 15px;
+        }
+        
+        .generator-cost {
+            color: var(--premium);
+            font-weight: bold;
+        }
+        
+        .generator-level {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--primary);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        
+        .generator-progress {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        
+        .generator-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success), #34d399);
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        /* Upgrades */
+        .upgrades-section {
+            background: rgba(30, 41, 59, 0.9);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 2px solid #8b5cf6;
+        }
+        
+        .upgrade-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .upgrade-card {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(30, 41, 59, 0.8));
+            border-radius: 15px;
+            padding: 20px;
+            border: 2px solid rgba(139, 92, 246, 0.5);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .upgrade-card:hover {
+            transform: translateY(-5px);
+            border-color: #8b5cf6;
+        }
+        
+        .upgrade-card.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .upgrade-card.purchased {
+            border-color: var(--success);
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(30, 41, 59, 0.8));
+        }
+        
+        /* Prestigio */
+        .prestige-section {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(30, 41, 59, 0.9));
+            border-radius: 20px;
+            padding: 30px;
+            border: 2px solid var(--secondary);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .prestige-button {
+            background: linear-gradient(135deg, var(--secondary), #f97316);
+            color: white;
             border: none;
-            padding: 15px;
-            border-radius: 10px;
-            font-size: 1.1rem;
+            padding: 20px 40px;
+            border-radius: 15px;
+            font-size: 1.3rem;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s;
-            width: 100%;
-            margin: 10px 0;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(0, 201, 255, 0.4);
-        }
-        
-        .btn:active {
-            transform: translateY(-1px);
-        }
-        
-        .btn::after {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-            transform: rotate(45deg);
-            transition: all 0.5s;
-        }
-        
-        .btn:hover::after {
-            left: 100%;
-        }
-        
-        .btn-premium {
-            background: linear-gradient(45deg, #8E2DE2, #4A00E0);
-            color: white;
-        }
-        
-        .btn-premium:hover {
-            box-shadow: 0 10px 20px rgba(142, 45, 226, 0.4);
-        }
-        
-        .wave-info {
-            background: rgba(255, 126, 95, 0.1);
-            padding: 15px;
-            border-radius: 10px;
-            margin: 20px 0;
-            border: 2px solid #ff7e5f;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .wave-info::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 126, 95, 0.2), transparent);
-            animation: waveGlow 3s infinite;
-        }
-        
-        @keyframes waveGlow {
-            0% { left: -100%; }
-            100% { left: 100%; }
-        }
-        
-        .wave-progress {
-            height: 15px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 10px;
-            margin: 10px 0;
-            overflow: hidden;
-            border: 2px solid #00b09b;
-        }
-        
-        .wave-progress-bar {
-            height: 100%;
-            background: linear-gradient(90deg, #00b09b, #96c93d);
-            width: 0%;
-            transition: width 0.5s ease-in-out;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .wave-progress-bar::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-            animation: progressShine 2s infinite;
-        }
-        
-        @keyframes progressShine {
-            0% { left: -100%; }
-            100% { left: 100%; }
-        }
-        
-        .shop {
-            background: linear-gradient(135deg, #1a2980, #26d0ce);
-            padding: 20px;
-            border-radius: 15px;
-            margin-top: 20px;
-            border: 2px solid #ffd700;
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
-        }
-        
-        .shop-item {
-            background: rgba(255, 215, 0, 0.1);
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s;
-            border: 1px solid rgba(255, 215, 0, 0.3);
+            margin: 20px auto;
             display: flex;
             align-items: center;
             gap: 15px;
         }
         
-        .shop-item:hover {
-            background: rgba(255, 215, 0, 0.2);
+        .prestige-button:hover:not(:disabled) {
             transform: scale(1.05);
+            box-shadow: 0 15px 30px rgba(245, 158, 11, 0.4);
         }
         
-        .game-over {
+        .prestige-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .prestige-bonus {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+        
+        /* Evoluciones */
+        .evolution-section {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(30, 41, 59, 0.9));
+            border-radius: 20px;
+            padding: 30px;
+            border: 2px solid var(--danger);
+            margin-bottom: 30px;
+        }
+        
+        .evolution-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+        
+        .evolution-tab {
+            background: rgba(239, 68, 68, 0.2);
+            padding: 12px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s;
+        }
+        
+        .evolution-tab.active {
+            background: var(--danger);
+            font-weight: bold;
+        }
+        
+        .evolution-content {
+            display: none;
+        }
+        
+        .evolution-content.active {
+            display: block;
+        }
+        
+        /* Tienda */
+        .shop-section {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(30, 41, 59, 0.9));
+            border-radius: 20px;
+            padding: 25px;
+            border: 2px solid var(--premium);
+        }
+        
+        .shop-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .shop-item {
+            background: rgba(251, 191, 36, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .shop-item:hover {
+            border-color: var(--premium);
+            transform: translateY(-5px);
+        }
+        
+        .shop-item-cost {
+            color: var(--premium);
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-top: 10px;
+        }
+        
+        /* Modales */
+        .modal {
             display: none;
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.95);
-            justify-content: center;
-            align-items: center;
+            background: rgba(0, 0, 0, 0.8);
             z-index: 1000;
-            animation: fadeIn 0.5s;
+            align-items: center;
+            justify-content: center;
         }
         
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+        .modal.active {
+            display: flex;
         }
         
-        .game-over-content {
-            background: linear-gradient(135deg, #000428, #004e92);
-            padding: 50px;
-            border-radius: 25px;
-            text-align: center;
-            border: 5px solid #ffd700;
-            box-shadow: 0 0 50px rgba(255, 215, 0, 0.5);
-            max-width: 600px;
+        .modal-content {
+            background: var(--dark);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
             width: 90%;
-            animation: pulseGlow 2s infinite;
+            border: 3px solid var(--primary);
+            position: relative;
         }
         
-        @keyframes pulseGlow {
-            0%, 100% { box-shadow: 0 0 50px rgba(255, 215, 0, 0.5); }
-            50% { box-shadow: 0 0 70px rgba(255, 215, 0, 0.8); }
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
         }
         
+        /* Notificaciones */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--success);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            z-index: 1001;
+            display: none;
+            animation: slideIn 0.3s;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+        
+        /* Efectos de partículas */
         .particle {
             position: absolute;
             pointer-events: none;
             border-radius: 50%;
             opacity: 0.7;
+            z-index: 1;
         }
         
-        .combo-display {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 5rem;
-            font-weight: bold;
-            color: #ffd700;
-            text-shadow: 0 0 30px currentColor;
-            z-index: 100;
-            display: none;
-            animation: comboPop 0.5s;
-        }
-        
-        @keyframes comboPop {
-            0% { transform: translate(-50%, -50%) scale(0); }
-            70% { transform: translate(-50%, -50%) scale(1.2); }
-            100% { transform: translate(-50%, -50%) scale(1); }
-        }
-        
-        .damage-popup {
-            position: absolute;
-            color: #ff4444;
-            font-weight: bold;
-            pointer-events: none;
-            z-index: 50;
-            animation: floatUp 1s forwards;
-            text-shadow: 2px 2px 0 #000;
-        }
-        
-        @keyframes floatUp {
-            0% { opacity: 1; transform: translateY(0); }
-            100% { opacity: 0; transform: translateY(-50px); }
-        }
-        
-        @media (max-width: 1024px) {
-            .game-container {
-                grid-template-columns: 1fr;
-            }
-            
-            .stats-bar {
-                grid-template-columns: repeat(3, 1fr);
-            }
-        }
-        
+        /* Responsive */
         @media (max-width: 768px) {
-            .stats-bar {
+            .header {
                 grid-template-columns: repeat(2, 1fr);
             }
             
-            h1 {
-                font-size: 2.5rem;
+            .clicker-button {
+                width: 200px;
+                height: 200px;
+                font-size: 3rem;
+            }
+            
+            .generator-grid, .upgrade-grid, .shop-grid {
+                grid-template-columns: 1fr;
             }
         }
         
-        .tower-description {
-            font-size: 0.8rem;
-            color: #ccc;
-            margin-top: 5px;
+        /* Animaciones */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        /* Scroll personalizado */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--darker);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 5px;
+        }
+        
+        /* Progreso global */
+        .global-progress {
+            height: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .global-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            width: 0%;
+            transition: width 1s;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>🚀 GALAXY DEFENSE</h1>
-            <p>Defiende la Base Espacial de las Hordas Alienígenas</p>
-        </header>
-        
-        <div class="stats-bar">
+        <!-- Header con estadísticas -->
+        <div class="header">
             <div class="stat-card">
-                <div class="stat-label">💰 Créditos</div>
-                <div class="stat-value" id="gold">1000</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">⚔️ Oleada</div>
-                <div class="stat-value" id="wave">1</div>
-            </div>
-            <div class="stat-card danger">
-                <div class="stat-label">❤️ Escudos</div>
-                <div class="stat-value" id="lives">25</div>
-            </div>
-            <div class="stat-card success">
-                <div class="stat-label">🎯 Puntos</div>
-                <div class="stat-value" id="points">0</div>
-            </div>
-            <div class="stat-card premium">
-                <div class="stat-label">💎 Energía</div>
-                <div class="stat-value" id="gems">100</div>
-            </div>
-        </div>
-        
-        <div class="game-container">
-            <div class="game-board">
-                <canvas id="gameCanvas" width="800" height="600"></canvas>
-                <div class="grid-overlay" id="gridOverlay"></div>
-                
-                <div class="wave-info">
-                    <h3>🌊 Progreso de la Oleada</h3>
-                    <div class="wave-progress">
-                        <div class="wave-progress-bar" id="waveProgress"></div>
-                    </div>
-                    <p id="waveStatus">Construye torres de defensa para proteger la base espacial</p>
-                    <div class="controls">
-                        <button class="btn" id="startWave">
-                            ⚔️ INICIAR OLEADA
-                        </button>
-                        <button class="btn btn-premium" id="specialPower">
-                            ✨ BOMBA DE NEUTRINOS (25 energía)
-                        </button>
-                    </div>
-                </div>
+                <div class="stat-label">💰 Dinero Total</div>
+                <div class="stat-value" id="totalMoney">0</div>
+                <div class="stat-subvalue" id="moneyPerSecond">+0/s</div>
             </div>
             
-            <div class="controls-sidebar">
-                <h2 style="color: #92fe9d; margin-bottom: 20px; text-align: center;">🛸 TORRES DE DEFENSA</h2>
+            <div class="stat-card">
+                <div class="stat-label">⚡ Clic por Click</div>
+                <div class="stat-value" id="clickPower">1</div>
+                <div class="stat-subvalue">Nivel <span id="clickLevel">1</span></div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-label">🌟 Prestigio</div>
+                <div class="stat-value" id="prestigeLevel">0</div>
+                <div class="stat-subvalue" id="prestigeMultiplier">x1.00</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-label">💎 Gemas</div>
+                <div class="stat-value" id="gems">0</div>
+                <div class="stat-subvalue">Premium currency</div>
+            </div>
+        </div>
+        
+        <!-- Progreso global -->
+        <div class="global-progress">
+            <div class="global-progress-bar" id="globalProgressBar"></div>
+        </div>
+        
+        <!-- Área principal del juego -->
+        <div class="game-area">
+            <!-- Clicker principal -->
+            <div class="clicker-section">
+                <h2 class="clicker-title">
+                    <i class="fas fa-hand-pointer"></i> CLICKER PRINCIPAL
+                </h2>
                 
-                <div class="tower-options">
-                    <div class="tower-card" data-tower="laser" data-cost="200">
-                        <div class="tower-icon" style="color: #00c9ff;">🔫</div>
-                        <div class="tower-name">Torre Láser</div>
-                        <div class="tower-cost">200 🪙</div>
-                        <div class="tower-stats">
-                            <span>🎯 Daño: 25</span>
-                            <span>⚡ Vel: Rápida</span>
-                        </div>
-                        <div class="tower-description">Dispara rayos láser de alta precisión</div>
+                <div class="clicker-button" id="clickerButton">
+                    <i class="fas fa-coins"></i>
+                </div>
+                
+                <div class="clicker-stats">
+                    <div>
+                        <div class="stat-label">Total Clicks</div>
+                        <div class="stat-value" id="totalClicks">0</div>
                     </div>
-                    
-                    <div class="tower-card" data-tower="missile" data-cost="350">
-                        <div class="tower-icon" style="color: #ff7e5f;">🚀</div>
-                        <div class="tower-name">Torre de Misiles</div>
-                        <div class="tower-cost">350 🪙</div>
-                        <div class="tower-stats">
-                            <span>🎯 Daño: 45</span>
-                            <span>✨ AOE: Sí</span>
-                        </div>
-                        <div class="tower-description">Misiles guiados con daño en área</div>
-                    </div>
-                    
-                    <div class="tower-card" data-tower="plasma" data-cost="500">
-                        <div class="tower-icon" style="color: #ffd700;">💥</div>
-                        <div class="tower-name">Torre de Plasma</div>
-                        <div class="tower-cost">500 🪙</div>
-                        <div class="tower-stats">
-                            <span>🎯 Daño: 75</span>
-                            <span>💥 Explosión</span>
-                        </div>
-                        <div class="tower-description">Proyectiles de plasma que explotan al impacto</div>
-                    </div>
-                    
-                    <div class="tower-card" data-tower="freeze" data-cost="300">
-                        <div class="tower-icon" style="color: #92fe9d;">❄️</div>
-                        <div class="tower-name">Torre Criogénica</div>
-                        <div class="tower-cost">300 🪙</div>
-                        <div class="tower-stats">
-                            <span>🎯 Daño: 20</span>
-                            <span>🐌 Congela</span>
-                        </div>
-                        <div class="tower-description">Ralentiza a los enemigos con congelación</div>
-                    </div>
-                    
-                    <div class="tower-card" data-tower="ion" data-cost="800">
-                        <div class="tower-icon" style="color: #8E2DE2;">⚡</div>
-                        <div class="tower-name">Torre de Iones</div>
-                        <div class="tower-cost">800 🪙</div>
-                        <div class="tower-stats">
-                            <span>🎯 Daño: 100</span>
-                            <span>🔥 Cadena</span>
-                        </div>
-                        <div class="tower-description">Descargas iónicas que saltan entre enemigos</div>
+                    <div>
+                        <div class="stat-label">CPS Manual</div>
+                        <div class="stat-value" id="manualCPS">0</div>
                     </div>
                 </div>
                 
-                <button class="btn" id="upgradeAll">
-                    ⚡ MEJORAR TODAS (300 créditos)
+                <button class="prestige-button" id="upgradeClicker">
+                    <i class="fas fa-arrow-up"></i>
+                    Mejorar Click (Coste: <span id="clickUpgradeCost">10</span>)
                 </button>
+            </div>
+            
+            <!-- Generadores -->
+            <div class="generators-section">
+                <h2 class="section-title">
+                    <i class="fas fa-industry"></i> GENERADORES AUTOMÁTICOS
+                </h2>
                 
-                <button class="btn" id="sellTower">
-                    💰 VENDER TORRE (75%)
-                </button>
-                
-                <div class="shop">
-                    <h3 style="color: #ffd700; text-align: center; margin-bottom: 15px;">🏪 TIENDA ESPACIAL</h3>
-                    
-                    <div class="shop-item" id="buyGold">
-                        <span style="font-size: 1.5rem;">🪙</span>
-                        <div>
-                            <div><strong>+500 Créditos</strong></div>
-                            <div style="color: #ffd700;">10 💎</div>
-                        </div>
-                    </div>
-                    
-                    <div class="shop-item" id="buyLives">
-                        <span style="font-size: 1.5rem;">❤️</span>
-                        <div>
-                            <div><strong>+5 Escudos</strong></div>
-                            <div style="color: #ffd700;">15 💎</div>
-                        </div>
-                    </div>
-                    
-                    <div class="shop-item" id="buyDamage">
-                        <span style="font-size: 1.5rem;">⚡</span>
-                        <div>
-                            <div><strong>x2 Daño 30s</strong></div>
-                            <div style="color: #ffd700;">20 💎</div>
-                        </div>
-                    </div>
+                <div class="generator-grid" id="generatorGrid">
+                    <!-- Los generadores se insertarán aquí -->
                 </div>
             </div>
         </div>
-    </div>
-    
-    <div class="combo-display" id="comboDisplay"></div>
-    
-    <div class="game-over" id="gameOver">
-        <div class="game-over-content">
-            <h2 id="gameOverTitle" style="font-size: 3rem; color: #ffd700; margin-bottom: 20px;">🏆 BASE DEFENDIDA</h2>
-            <div id="victoryIcon" style="font-size: 6rem; margin: 20px 0;">🚀</div>
-            <p id="gameOverMessage" style="font-size: 1.2rem; margin-bottom: 20px;">Has protegido la base espacial con éxito</p>
-            <div style="background: rgba(255,255,255,0.1); padding: 25px; border-radius: 15px; margin: 20px 0;">
-                <p style="margin-bottom: 10px;">Oleada alcanzada: <span id="finalWave" style="color: #ffd700;">1</span></p>
-                <p style="margin-bottom: 10px;">Puntuación final: <span id="finalScore" style="color: #ffd700;">0</span></p>
-                <p style="margin-bottom: 10px;">Créditos obtenidos: <span id="finalGold" style="color: #ffd700;">0</span></p>
+        
+        <!-- Upgrades -->
+        <div class="upgrades-section">
+            <h2 class="section-title">
+                <i class="fas fa-bolt"></i> MEJORAS ESPECIALES
+            </h2>
+            
+            <div class="upgrade-grid" id="upgradeGrid">
+                <!-- Las mejoras se insertarán aquí -->
             </div>
-            <button class="btn" id="restartGame" style="width: 200px; margin: 20px auto;">
-                🔄 JUGAR DE NUEVO
+        </div>
+        
+        <!-- Prestigio -->
+        <div class="prestige-section">
+            <h2 class="section-title">
+                <i class="fas fa-crown"></i> SISTEMA DE PRESTIGIO
+            </h2>
+            
+            <p>Reinicia tu progreso a cambio de un multiplicador permanente.</p>
+            
+            <div class="prestige-bonus">
+                <p>Próximo multiplicador: <span id="nextPrestigeMultiplier">x1.50</span></p>
+                <p>Requisito: <span id="prestigeRequirement">1,000,000</span> dinero total</p>
+            </div>
+            
+            <button class="prestige-button" id="prestigeButton" disabled>
+                <i class="fas fa-redo"></i>
+                PRESTIGE (Reiniciar juego)
             </button>
         </div>
+        
+        <!-- Evoluciones -->
+        <div class="evolution-section">
+            <h2 class="section-title">
+                <i class="fas fa-atom"></i> EVOLUCIONES
+            </h2>
+            
+            <div class="evolution-tabs" id="evolutionTabs">
+                <!-- Las pestañas de evolución se insertarán aquí -->
+            </div>
+            
+            <div class="evolution-content active" id="evolutionContent1">
+                <!-- Contenido de evolución -->
+                <p>Desbloquea nuevas mecánicas y potenciadores.</p>
+                <div id="evolutionItems">
+                    <!-- Items de evolución -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tienda -->
+        <div class="shop-section">
+            <h2 class="section-title">
+                <i class="fas fa-shopping-cart"></i> TIENDA PREMIUM
+            </h2>
+            
+            <div class="shop-grid" id="shopGrid">
+                <!-- Items de la tienda -->
+            </div>
+        </div>
     </div>
+    
+    <!-- Modal de confirmación -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-content">
+            <button class="modal-close" id="closeModal">&times;</button>
+            <h2 id="modalTitle">Confirmar acción</h2>
+            <p id="modalMessage">¿Estás seguro?</p>
+            <div style="display: flex; gap: 15px; margin-top: 20px;">
+                <button class="prestige-button" id="modalConfirm">Confirmar</button>
+                <button class="prestige-button" style="background: var(--danger);" id="modalCancel">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notificaciones -->
+    <div class="notification" id="notification"></div>
 
     <script>
-        // Variables del juego
-        let gameState = {
-            gold: 1000,
-            wave: 1,
-            lives: 25,
-            points: 0,
+        // ============================
+        // VARIABLES Y ESTADO DEL JUEGO
+        // ============================
+        const gameState = {
+            // Recursos principales
+            money: 0,
+            totalMoney: 0,
             gems: 100,
-            waveActive: false,
-            selectedTower: null,
-            towers: [],
-            enemies: [],
-            projectiles: [],
-            path: [],
-            grid: [],
-            selectedTowerElement: null,
-            combo: 0,
-            comboTimeout: null,
-            gameOver: false,
-            towerTypes: {
-                laser: { damage: 25, range: 150, speed: 10, color: "#00c9ff", icon: "🔫", cost: 200 },
-                missile: { damage: 45, range: 120, speed: 6, color: "#ff7e5f", icon: "🚀", cost: 350, aoe: true },
-                plasma: { damage: 75, range: 100, speed: 4, color: "#ffd700", icon: "💥", cost: 500, explosion: true },
-                freeze: { damage: 20, range: 130, speed: 8, color: "#92fe9d", icon: "❄️", cost: 300, slow: true },
-                ion: { damage: 100, range: 180, speed: 3, color: "#8E2DE2", icon: "⚡", cost: 800, chain: true }
-            },
-            enemyTypes: [
-                { health: 50, speed: 1, color: "#FF416C", reward: 25, icon: "👾" },
-                { health: 80, speed: 0.8, color: "#FF4B2B", reward: 40, icon: "👽" },
-                { health: 120, speed: 0.6, color: "#8E2DE2", reward: 60, icon: "🤖" },
-                { health: 200, speed: 0.4, color: "#00c9ff", reward: 100, icon: "🛸" }
-            ]
+            prestigeLevel: 0,
+            prestigeMultiplier: 1,
+            
+            // Estadísticas
+            clicks: 0,
+            clickPower: 1,
+            clickUpgradeCost: 10,
+            clickLevel: 1,
+            
+            // Generadores
+            generators: [
+                {
+                    id: 'generator1',
+                    name: 'Minería Básica',
+                    icon: '⛏️',
+                    baseCost: 15,
+                    baseProduction: 0.1,
+                    level: 0,
+                    unlocked: true,
+                    description: 'Extrae recursos básicos'
+                },
+                {
+                    id: 'generator2',
+                    name: 'Granja Automatizada',
+                    icon: '🌾',
+                    baseCost: 100,
+                    baseProduction: 1,
+                    level: 0,
+                    unlocked: false,
+                    description: 'Produce alimentos automatizados'
+                },
+                {
+                    id: 'generator3',
+                    name: 'Fábrica de Robots',
+                    icon: '🤖',
+                    baseCost: 500,
+                    baseProduction: 5,
+                    level: 0,
+                    unlocked: false,
+                    description: 'Fabrica robots trabajadores'
+                },
+                {
+                    id: 'generator4',
+                    name: 'Planta de Energía',
+                    icon: '⚡',
+                    baseCost: 3000,
+                    baseProduction: 25,
+                    level: 0,
+                    unlocked: false,
+                    description: 'Genera energía para todo'
+                },
+                {
+                    id: 'generator5',
+                    name: 'Centro de Investigación',
+                    icon: '🔬',
+                    baseCost: 10000,
+                    baseProduction: 100,
+                    level: 0,
+                    unlocked: false,
+                    description: 'Investiga nuevas tecnologías'
+                },
+                {
+                    id: 'generator6',
+                    name: 'Colonia Espacial',
+                    icon: '🚀',
+                    baseCost: 50000,
+                    baseProduction: 500,
+                    level: 0,
+                    unlocked: false,
+                    description: 'Expansión interplanetaria'
+                },
+                {
+                    id: 'generator7',
+                    name: 'Portal Cuántico',
+                    icon: '🌀',
+                    baseCost: 250000,
+                    baseProduction: 2500,
+                    level: 0,
+                    unlocked: false,
+                    description: 'Manipula la realidad'
+                },
+                {
+                    id: 'generator8',
+                    name: 'Singularidad',
+                    icon: '⭐',
+                    baseCost: 1000000,
+                    baseProduction: 10000,
+                    level: 0,
+                    unlocked: false,
+                    description: 'Control de energía cósmica'
+                }
+            ],
+            
+            // Mejoras
+            upgrades: [
+                {
+                    id: 'upgrade1',
+                    name: 'Click Doble',
+                    icon: '✌️',
+                    cost: 50,
+                    description: 'Doble poder de click',
+                    purchased: false,
+                    effect: 'multiplyClickPower',
+                    value: 2
+                },
+                {
+                    id: 'upgrade2',
+                    name: 'Auto-Clicker',
+                    icon: '🤖',
+                    cost: 200,
+                    description: '1 click automático por segundo',
+                    purchased: false,
+                    effect: 'autoClicker',
+                    value: 1
+                },
+                {
+                    id: 'upgrade3',
+                    name: 'Generadores x2',
+                    icon: '📈',
+                    cost: 1000,
+                    description: 'Generadores producen el doble',
+                    purchased: false,
+                    effect: 'generatorMultiplier',
+                    value: 2
+                },
+                {
+                    id: 'upgrade4',
+                    name: 'Tiempo Acelerado',
+                    icon: '⏩',
+                    cost: 5000,
+                    description: 'Los generadores son 50% más rápidos',
+                    purchased: false,
+                    effect: 'generatorSpeed',
+                    value: 1.5
+                }
+            ],
+            
+            // Evoluciones
+            evolutions: [
+                {
+                    id: 'evo1',
+                    name: 'Automatización Total',
+                    icon: '🏭',
+                    cost: 10000,
+                    description: 'Desbloquea mejoras de automatización',
+                    unlocked: false,
+                    effect: 'unlockAutomation'
+                },
+                {
+                    id: 'evo2',
+                    name: 'Realidad Virtual',
+                    icon: '👓',
+                    cost: 50000,
+                    description: 'Desbloquea la dimensión virtual',
+                    unlocked: false,
+                    effect: 'unlockVR'
+                },
+                {
+                    id: 'evo3',
+                    name: 'Inteligencia Artificial',
+                    icon: '🧠',
+                    cost: 250000,
+                    description: 'IA que optimiza producción',
+                    unlocked: false,
+                    effect: 'unlockAI'
+                },
+                {
+                    id: 'evo4',
+                    name: 'Viaje en el Tiempo',
+                    icon: '⏳',
+                    cost: 1000000,
+                    description: 'Manipula el flujo del tiempo',
+                    unlocked: false,
+                    effect: 'unlockTimeTravel'
+                }
+            ],
+            
+            // Tienda
+            shopItems: [
+                {
+                    id: 'shop1',
+                    name: '+1000 Dinero',
+                    icon: '💰',
+                    cost: 10,
+                    description: 'Instant boost',
+                    effect: 'addMoney',
+                    value: 1000
+                },
+                {
+                    id: 'shop2',
+                    name: 'x2 Boost 1h',
+                    icon: '⚡',
+                    cost: 25,
+                    description: 'Todo x2 por 1 hora',
+                    effect: 'temporaryMultiplier',
+                    value: 2,
+                    duration: 3600000
+                },
+                {
+                    id: 'shop3',
+                    name: 'Auto-Clicker Premium',
+                    icon: '👑',
+                    cost: 50,
+                    description: '+10 clicks automáticos por segundo',
+                    effect: 'premiumAutoClicker',
+                    value: 10
+                },
+                {
+                    id: 'shop4',
+                    name: 'Paquete de Inicio',
+                    icon: '🎁',
+                    cost: 100,
+                    description: 'Mejoras iniciales + gemas extra',
+                    effect: 'starterPack'
+                }
+            ],
+            
+            // Prestigio
+            nextPrestigeMultiplier: 1.5,
+            prestigeRequirement: 1000000,
+            
+            // Efectos activos
+            activeBoosts: [],
+            
+            // Sistema de guardado
+            lastSave: Date.now(),
+            saveInterval: 30000 // 30 segundos
         };
 
-        // Inicialización
-        document.addEventListener('DOMContentLoaded', () => {
-            initGame();
-            setupEventListeners();
-            createGrid();
-            generatePath();
-            gameLoop();
-        });
-
+        // ============================
+        // FUNCIONES DE INICIALIZACIÓN
+        // ============================
         function initGame() {
+            loadGame();
+            createGenerators();
+            createUpgrades();
+            createEvolutions();
+            createShopItems();
+            updateUI();
+            setupEventListeners();
+            startGameLoop();
+            startAutoSave();
+            
+            showNotification('¡Bienvenido a Hyper Idle Clicker Evolution!', 'success');
+        }
+
+        function createGenerators() {
+            const generatorGrid = document.getElementById('generatorGrid');
+            generatorGrid.innerHTML = '';
+            
+            gameState.generators.forEach(generator => {
+                const generatorCard = document.createElement('div');
+                generatorCard.className = `generator-card ${generator.level === 0 && generator.unlocked ? '' : 'disabled'}`;
+                generatorCard.id = generator.id;
+                
+                const cost = Math.floor(generator.baseCost * Math.pow(1.15, generator.level));
+                const production = generator.baseProduction * generator.level * gameState.prestigeMultiplier;
+                
+                generatorCard.innerHTML = `
+                    <div class="generator-icon">${generator.icon}</div>
+                    <div class="generator-name">${generator.name}</div>
+                    <div class="generator-stats">
+                        <span>Nivel: ${generator.level}</span>
+                        <span class="generator-cost">${formatNumber(cost)}</span>
+                    </div>
+                    <div class="generator-stats">
+                        <span>Producción: ${formatNumber(production)}/s</span>
+                    </div>
+                    <div class="generator-progress">
+                        <div class="generator-progress-bar" id="progress-${generator.id}"></div>
+                    </div>
+                    <div class="generator-level">${generator.level}</div>
+                `;
+                
+                if (generator.unlocked || generator.level > 0) {
+                    generatorCard.addEventListener('click', () => buyGenerator(generator.id));
+                }
+                
+                generatorGrid.appendChild(generatorCard);
+            });
+        }
+
+        function createUpgrades() {
+            const upgradeGrid = document.getElementById('upgradeGrid');
+            upgradeGrid.innerHTML = '';
+            
+            gameState.upgrades.forEach(upgrade => {
+                const upgradeCard = document.createElement('div');
+                upgradeCard.className = `upgrade-card ${upgrade.purchased ? 'purchased' : ''} ${gameState.money >= upgrade.cost ? '' : 'disabled'}`;
+                upgradeCard.id = upgrade.id;
+                
+                upgradeCard.innerHTML = `
+                    <div style="font-size: 2rem; margin-bottom: 10px;">${upgrade.icon}</div>
+                    <div style="font-weight: bold; margin-bottom: 5px;">${upgrade.name}</div>
+                    <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 10px;">${upgrade.description}</div>
+                    <div style="color: var(--premium); font-weight: bold; margin-top: 10px;">${formatNumber(upgrade.cost)}</div>
+                `;
+                
+                if (!upgrade.purchased) {
+                    upgradeCard.addEventListener('click', () => buyUpgrade(upgrade.id));
+                }
+                
+                upgradeGrid.appendChild(upgradeCard);
+            });
+        }
+
+        function createEvolutions() {
+            const evolutionTabs = document.getElementById('evolutionTabs');
+            evolutionTabs.innerHTML = '';
+            
+            gameState.evolutions.forEach((evolution, index) => {
+                const tab = document.createElement('div');
+                tab.className = `evolution-tab ${index === 0 ? 'active' : ''}`;
+                tab.textContent = evolution.name;
+                tab.addEventListener('click', () => switchEvolutionTab(index));
+                evolutionTabs.appendChild(tab);
+            });
+            
+            updateEvolutionContent();
+        }
+
+        function createShopItems() {
+            const shopGrid = document.getElementById('shopGrid');
+            shopGrid.innerHTML = '';
+            
+            gameState.shopItems.forEach(item => {
+                const shopItem = document.createElement('div');
+                shopItem.className = 'shop-item';
+                shopItem.id = item.id;
+                
+                shopItem.innerHTML = `
+                    <div style="font-size: 2.5rem; margin-bottom: 10px;">${item.icon}</div>
+                    <div style="font-weight: bold; margin-bottom: 5px;">${item.name}</div>
+                    <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 10px;">${item.description}</div>
+                    <div class="shop-item-cost">${item.cost} 💎</div>
+                `;
+                
+                shopItem.addEventListener('click', () => buyShopItem(item.id));
+                
+                shopGrid.appendChild(shopItem);
+            });
+        }
+
+        // ============================
+        // FUNCIONES DEL JUEGO
+        // ============================
+        function click() {
+            const baseClick = gameState.clickPower * gameState.prestigeMultiplier;
+            const clickBoost = gameState.activeBoosts.find(b => b.type === 'click')?.value || 1;
+            const clickAmount = baseClick * clickBoost;
+            
+            gameState.money += clickAmount;
+            gameState.totalMoney += clickAmount;
+            gameState.clicks++;
+            
+            // Efecto visual
+            createParticle(event.clientX, event.clientY, clickAmount);
+            
             updateUI();
         }
 
-        function createGrid() {
-            const gridOverlay = document.getElementById('gridOverlay');
-            gridOverlay.innerHTML = '';
-            gameState.grid = [];
+        function buyGenerator(generatorId) {
+            const generator = gameState.generators.find(g => g.id === generatorId);
+            const cost = Math.floor(generator.baseCost * Math.pow(1.15, generator.level));
             
-            const cols = 8;
-            const rows = 6;
-            const cellWidth = 800 / cols;
-            const cellHeight = 600 / rows;
-            
-            for (let row = 0; row < rows; row++) {
-                for (let col = 0; col < cols; col++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'grid-cell';
-                    cell.style.gridColumn = col + 1;
-                    cell.style.gridRow = row + 1;
-                    
-                    // Marcar celdas que están en el camino como no válidas
-                    const x = col * cellWidth + cellWidth/2;
-                    const y = row * cellHeight + cellHeight/2;
-                    
-                    // Verificar si esta celda está cerca del camino
-                    let nearPath = false;
-                    for (let i = 0; i < gameState.path.length; i++) {
-                        const pathPoint = gameState.path[i];
-                        const distance = Math.sqrt(Math.pow(x - pathPoint.x, 2) + Math.pow(y - pathPoint.y, 2));
-                        if (distance < 40) {
-                            nearPath = true;
-                            break;
-                        }
+            if (gameState.money >= cost && (generator.unlocked || generator.level > 0)) {
+                gameState.money -= cost;
+                generator.level++;
+                
+                // Desbloquear siguiente generador si corresponde
+                if (generator.level === 1) {
+                    const nextIndex = gameState.generators.findIndex(g => g.id === generatorId) + 1;
+                    if (nextIndex < gameState.generators.length) {
+                        gameState.generators[nextIndex].unlocked = true;
                     }
-                    
-                    gameState.grid.push({
-                        x: col * cellWidth,
-                        y: row * cellHeight,
-                        width: cellWidth,
-                        height: cellHeight,
-                        centerX: x,
-                        centerY: y,
-                        occupied: false,
-                        nearPath: nearPath
-                    });
-                    
-                    gridOverlay.appendChild(cell);
-                }
-            }
-        }
-
-        function generatePath() {
-            // Generar un camino en zigzag para los enemigos
-            gameState.path = [];
-            const startX = 0;
-            const startY = 300;
-            
-            // Puntos de control del camino
-            const points = [
-                { x: startX, y: startY },
-                { x: 200, y: 100 },
-                { x: 400, y: 500 },
-                { x: 600, y: 200 },
-                { x: 800, y: 400 }
-            ];
-            
-            // Crear camino suave entre puntos
-            for (let i = 0; i < points.length - 1; i++) {
-                const p1 = points[i];
-                const p2 = points[i + 1];
-                const steps = 20;
-                
-                for (let j = 0; j <= steps; j++) {
-                    const t = j / steps;
-                    const x = p1.x + (p2.x - p1.x) * t;
-                    const y = p1.y + (p2.y - p1.y) * t;
-                    gameState.path.push({ x, y });
-                }
-            }
-        }
-
-        function setupEventListeners() {
-            // Selección de torres
-            document.querySelectorAll('.tower-card').forEach(card => {
-                card.addEventListener('click', () => {
-                    document.querySelectorAll('.tower-card').forEach(c => c.classList.remove('selected'));
-                    card.classList.add('selected');
-                    
-                    gameState.selectedTower = card.dataset.tower;
-                    gameState.selectedTowerElement = card;
-                    
-                    // Actualizar celdas de la grilla
-                    updateGridCells();
-                });
-            });
-
-            // Colocación de torres
-            document.getElementById('gameCanvas').addEventListener('click', (e) => {
-                if (!gameState.selectedTower || gameState.waveActive) return;
-                
-                const rect = e.target.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                
-                // Encontrar la celda más cercana
-                const cell = findClosestCell(x, y);
-                
-                if (cell && !cell.occupied && !cell.nearPath) {
-                    const towerType = gameState.towerTypes[gameState.selectedTower];
-                    
-                    if (gameState.gold >= towerType.cost) {
-                        gameState.gold -= towerType.cost;
-                        
-                        const tower = {
-                            type: gameState.selectedTower,
-                            x: cell.centerX - 40,
-                            y: cell.centerY - 40,
-                            centerX: cell.centerX,
-                            centerY: cell.centerY,
-                            damage: towerType.damage,
-                            range: towerType.range,
-                            speed: towerType.speed,
-                            color: towerType.color,
-                            icon: towerType.icon,
-                            level: 1,
-                            lastShot: 0,
-                            aoe: towerType.aoe || false,
-                            explosion: towerType.explosion || false,
-                            slow: towerType.slow || false,
-                            chain: towerType.chain || false
-                        };
-                        
-                        gameState.towers.push(tower);
-                        cell.occupied = true;
-                        
-                        // Crear elemento visual de la torre
-                        createTowerElement(tower);
-                        
-                        updateUI();
-                    } else {
-                        showMessage("¡No tienes suficientes créditos!", "#FF416C");
-                    }
-                }
-            });
-
-            // Botón de iniciar oleada
-            document.getElementById('startWave').addEventListener('click', () => {
-                if (!gameState.waveActive && !gameState.gameOver) {
-                    startWave();
-                }
-            });
-
-            // Botón de poder especial
-            document.getElementById('specialPower').addEventListener('click', () => {
-                if (gameState.gems >= 25 && gameState.waveActive) {
-                    gameState.gems -= 25;
-                    activateNeutrinoBomb();
-                    updateUI();
-                }
-            });
-
-            // Botón de mejorar todas las torres
-            document.getElementById('upgradeAll').addEventListener('click', () => {
-                if (gameState.gold >= 300 && gameState.towers.length > 0) {
-                    gameState.gold -= 300;
-                    gameState.towers.forEach(tower => {
-                        tower.level++;
-                        tower.damage = Math.floor(tower.damage * 1.5);
-                        tower.range = Math.floor(tower.range * 1.2);
-                        tower.speed = Math.floor(tower.speed * 1.1);
-                    });
-                    updateUI();
-                    showMessage("¡Todas las torres mejoradas!", "#92fe9d");
-                }
-            });
-
-            // Botón de vender torre
-            document.getElementById('sellTower').addEventListener('click', () => {
-                const selectedTower = document.querySelector('.tower-placed.selected');
-                if (selectedTower) {
-                    const towerId = selectedTower.dataset.id;
-                    const towerIndex = gameState.towers.findIndex(t => t.id == towerId);
-                    
-                    if (towerIndex !== -1) {
-                        const tower = gameState.towers[towerIndex];
-                        const refund = Math.floor(towerType[tower.type].cost * 0.75);
-                        gameState.gold += refund;
-                        
-                        // Liberar la celda
-                        const cell = findCellAtPosition(tower.centerX, tower.centerY);
-                        if (cell) cell.occupied = false;
-                        
-                        // Eliminar torre
-                        gameState.towers.splice(towerIndex, 1);
-                        selectedTower.remove();
-                        
-                        updateUI();
-                        showMessage(`Torre vendida por ${refund} créditos`, "#ffd700");
-                    }
-                }
-            });
-
-            // Tienda
-            document.getElementById('buyGold').addEventListener('click', () => {
-                if (gameState.gems >= 10) {
-                    gameState.gems -= 10;
-                    gameState.gold += 500;
-                    updateUI();
-                    showMessage("+500 créditos adquiridos", "#ffd700");
-                }
-            });
-
-            document.getElementById('buyLives').addEventListener('click', () => {
-                if (gameState.gems >= 15) {
-                    gameState.gems -= 15;
-                    gameState.lives += 5;
-                    updateUI();
-                    showMessage("+5 escudos adquiridos", "#00c9ff");
-                }
-            });
-
-            document.getElementById('buyDamage').addEventListener('click', () => {
-                if (gameState.gems >= 20) {
-                    gameState.gems -= 20;
-                    activateDoubleDamage();
-                    updateUI();
-                    showMessage("Daño doble activado por 30 segundos", "#FF416C");
-                }
-            });
-
-            // Reiniciar juego
-            document.getElementById('restartGame').addEventListener('click', () => {
-                resetGame();
-            });
-        }
-
-        function findClosestCell(x, y) {
-            let closestCell = null;
-            let minDistance = Infinity;
-            
-            gameState.grid.forEach(cell => {
-                const distance = Math.sqrt(Math.pow(x - cell.centerX, 2) + Math.pow(y - cell.centerY, 2));
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    closestCell = cell;
-                }
-            });
-            
-            return closestCell;
-        }
-
-        function findCellAtPosition(x, y) {
-            return gameState.grid.find(cell => 
-                Math.abs(cell.centerX - x) < 5 && Math.abs(cell.centerY - y) < 5
-            );
-        }
-
-        function updateGridCells() {
-            document.querySelectorAll('.grid-cell').forEach((cell, index) => {
-                const gridCell = gameState.grid[index];
-                cell.classList.remove('valid', 'invalid');
-                
-                if (gameState.selectedTower && !gameState.waveActive) {
-                    if (gridCell.occupied || gridCell.nearPath) {
-                        cell.classList.add('invalid');
-                    } else {
-                        cell.classList.add('valid');
-                    }
-                }
-            });
-        }
-
-        function createTowerElement(tower) {
-            const gameBoard = document.querySelector('.game-board');
-            const towerElement = document.createElement('div');
-            tower.id = 'tower_' + Date.now() + Math.random();
-            towerElement.dataset.id = tower.id;
-            
-            towerElement.className = 'tower-placed';
-            towerElement.style.left = tower.x + 'px';
-            towerElement.style.top = tower.y + 'px';
-            towerElement.style.backgroundColor = tower.color + '30';
-            towerElement.style.border = `2px solid ${tower.color}`;
-            towerElement.style.color = tower.color;
-            
-            towerElement.innerHTML = `
-                <div style="font-size: 24px;">${tower.icon}</div>
-                <div style="font-size: 12px; margin-top: 5px;">Nivel ${tower.level}</div>
-                <div class="tower-level">${tower.level}</div>
-            `;
-            
-            towerElement.addEventListener('click', (e) => {
-                e.stopPropagation();
-                document.querySelectorAll('.tower-placed').forEach(t => t.classList.remove('selected'));
-                towerElement.classList.add('selected');
-            });
-            
-            gameBoard.appendChild(towerElement);
-        }
-
-        function startWave() {
-            gameState.waveActive = true;
-            document.getElementById('startWave').disabled = true;
-            document.getElementById('startWave').textContent = `OLEADA ${gameState.wave} EN CURSO`;
-            
-            // Generar enemigos según la oleada
-            const enemyCount = 5 + gameState.wave * 2;
-            const enemyTypeIndex = Math.min(Math.floor(gameState.wave / 3), gameState.enemyTypes.length - 1);
-            
-            for (let i = 0; i < enemyCount; i++) {
-                setTimeout(() => {
-                    if (!gameState.gameOver) {
-                        spawnEnemy(enemyTypeIndex);
-                    }
-                }, i * 1000);
-            }
-            
-            // Actualizar progreso de la oleada
-            updateWaveProgress();
-        }
-
-        function spawnEnemy(typeIndex) {
-            const enemyType = gameState.enemyTypes[typeIndex];
-            const enemy = {
-                id: Date.now() + Math.random(),
-                type: typeIndex,
-                health: enemyType.health * (1 + (gameState.wave - 1) * 0.2),
-                maxHealth: enemyType.health * (1 + (gameState.wave - 1) * 0.2),
-                speed: enemyType.speed,
-                color: enemyType.color,
-                icon: enemyType.icon,
-                reward: enemyType.reward + gameState.wave * 5,
-                pathIndex: 0,
-                x: gameState.path[0].x,
-                y: gameState.path[0].y,
-                slowDuration: 0
-            };
-            
-            gameState.enemies.push(enemy);
-            
-            // Crear elemento visual del enemigo
-            createEnemyElement(enemy);
-        }
-
-        function createEnemyElement(enemy) {
-            const gameBoard = document.querySelector('.game-board');
-            const enemyElement = document.createElement('div');
-            enemyElement.dataset.id = enemy.id;
-            
-            enemyElement.className = 'enemy';
-            enemyElement.style.left = (enemy.x - 20) + 'px';
-            enemyElement.style.top = (enemy.y - 20) + 'px';
-            enemyElement.style.backgroundColor = enemy.color;
-            enemyElement.style.boxShadow = `0 0 10px ${enemy.color}`;
-            
-            enemyElement.innerHTML = `
-                <div>${enemy.icon}</div>
-                <div style="position: absolute; bottom: -20px; width: 40px; height: 4px; background: #333; border-radius: 2px;">
-                    <div style="height: 100%; width: ${(enemy.health / enemy.maxHealth) * 100}%; background: #ff4444; border-radius: 2px;"></div>
-                </div>
-            `;
-            
-            gameBoard.appendChild(enemyElement);
-        }
-
-        function activateNeutrinoBomb() {
-            // Eliminar todos los enemigos en pantalla
-            gameState.enemies.forEach(enemy => {
-                gameState.points += enemy.reward * 2;
-                gameState.gold += enemy.reward;
-                
-                // Crear efecto visual
-                createExplosion(enemy.x, enemy.y, enemy.color);
-            });
-            
-            gameState.enemies = [];
-            document.querySelectorAll('.enemy').forEach(e => e.remove());
-            
-            showMessage("¡Bomba de neutrinos activada!", "#8E2DE2");
-        }
-
-        function activateDoubleDamage() {
-            const originalDamage = {};
-            
-            // Guardar daño original y duplicarlo
-            gameState.towers.forEach(tower => {
-                originalDamage[tower.id] = tower.damage;
-                tower.damage *= 2;
-            });
-            
-            // Restaurar después de 30 segundos
-            setTimeout(() => {
-                gameState.towers.forEach(tower => {
-                    if (originalDamage[tower.id]) {
-                        tower.damage = originalDamage[tower.id];
-                    }
-                });
-            }, 30000);
-        }
-
-        function createExplosion(x, y, color) {
-            const gameBoard = document.querySelector('.game-board');
-            
-            for (let i = 0; i < 20; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'particle';
-                particle.style.left = x + 'px';
-                particle.style.top = y + 'px';
-                particle.style.width = Math.random() * 10 + 5 + 'px';
-                particle.style.height = particle.style.width;
-                particle.style.backgroundColor = color;
-                
-                const angle = Math.random() * Math.PI * 2;
-                const speed = Math.random() * 5 + 2;
-                const vx = Math.cos(angle) * speed;
-                const vy = Math.sin(angle) * speed;
-                
-                gameBoard.appendChild(particle);
-                
-                let opacity = 0.7;
-                const animate = () => {
-                    opacity -= 0.02;
-                    particle.style.opacity = opacity;
-                    particle.style.left = parseFloat(particle.style.left) + vx + 'px';
-                    particle.style.top = parseFloat(particle.style.top) + vy + 'px';
-                    
-                    if (opacity > 0) {
-                        requestAnimationFrame(animate);
-                    } else {
-                        particle.remove();
-                    }
-                };
-                
-                animate();
-            }
-        }
-
-        function updateWaveProgress() {
-            const progressBar = document.getElementById('waveProgress');
-            const waveStatus = document.getElementById('waveStatus');
-            
-            if (gameState.waveActive) {
-                const interval = setInterval(() => {
-                    if (gameState.enemies.length === 0 && !gameState.gameOver) {
-                        clearInterval(interval);
-                        endWave();
-                    } else {
-                        const progress = (gameState.enemies.length / (5 + gameState.wave * 2)) * 100;
-                        progressBar.style.width = (100 - progress) + '%';
-                        waveStatus.textContent = `Enemigos restantes: ${gameState.enemies.length}`;
-                    }
-                }, 1000);
-            }
-        }
-
-        function endWave() {
-            gameState.waveActive = false;
-            gameState.wave++;
-            gameState.gold += 100 * gameState.wave;
-            gameState.gems += 5;
-            
-            document.getElementById('startWave').disabled = false;
-            document.getElementById('startWave').textContent = `⚔️ INICIAR OLEADA ${gameState.wave}`;
-            
-            updateUI();
-            
-            if (gameState.wave % 5 === 0) {
-                showMessage(`¡Oleada ${gameState.wave} completada! Recompensa extra: +100 energía`, "#ffd700");
-                gameState.gems += 20;
-            } else {
-                showMessage(`¡Oleada ${gameState.wave - 1} completada!`, "#92fe9d");
-            }
-            
-            // Actualizar progreso
-            document.getElementById('waveProgress').style.width = '0%';
-            document.getElementById('waveStatus').textContent = 'Preparándose para la próxima oleada...';
-        }
-
-        function gameLoop() {
-            updateEnemies();
-            updateTowers();
-            updateProjectiles();
-            checkGameOver();
-            
-            requestAnimationFrame(gameLoop);
-        }
-
-        function updateEnemies() {
-            gameState.enemies.forEach((enemy, index) => {
-                // Actualizar posición en el camino
-                if (enemy.pathIndex < gameState.path.length - 1) {
-                    const targetPoint = gameState.path[enemy.pathIndex + 1];
-                    const dx = targetPoint.x - enemy.x;
-                    const dy = targetPoint.y - enemy.y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    
-                    // Aplicar ralentización si está activa
-                    const actualSpeed = enemy.slowDuration > 0 ? enemy.speed * 0.3 : enemy.speed;
-                    
-                    if (distance < actualSpeed) {
-                        enemy.pathIndex++;
-                    } else {
-                        enemy.x += (dx / distance) * actualSpeed;
-                        enemy.y += (dy / distance) * actualSpeed;
-                    }
-                    
-                    // Actualizar elemento visual
-                    const enemyElement = document.querySelector(`.enemy[data-id="${enemy.id}"]`);
-                    if (enemyElement) {
-                        enemyElement.style.left = (enemy.x - 20) + 'px';
-                        enemyElement.style.top = (enemy.y - 20) + 'px';
-                        
-                        // Actualizar barra de salud
-                        const healthBar = enemyElement.querySelector('div > div');
-                        if (healthBar) {
-                            healthBar.style.width = `${(enemy.health / enemy.maxHealth) * 100}%`;
-                        }
-                    }
-                    
-                    // Verificar si llegó al final del camino
-                    if (enemy.pathIndex >= gameState.path.length - 1) {
-                        gameState.lives--;
-                        enemyElement.remove();
-                        gameState.enemies.splice(index, 1);
-                        updateUI();
-                        
-                        if (enemy.slowDuration > 0) {
-                            enemy.slowDuration--;
-                        }
-                        
-                        createDamagePopup(enemy.x, enemy.y, "-1 ❤️", "#FF416C");
-                    }
-                }
-            });
-        }
-
-        function updateTowers() {
-            const currentTime = Date.now();
-            
-            gameState.towers.forEach(tower => {
-                // Encontrar el enemigo más cercano
-                let target = null;
-                let minDistance = Infinity;
-                
-                gameState.enemies.forEach(enemy => {
-                    const dx = enemy.x - tower.centerX;
-                    const dy = enemy.y - tower.centerY;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    
-                    if (distance < tower.range && distance < minDistance) {
-                        minDistance = distance;
-                        target = enemy;
-                    }
-                });
-                
-                // Disparar al objetivo
-                if (target && currentTime - tower.lastShot > 1000 / tower.speed) {
-                    tower.lastShot = currentTime;
-                    
-                    // Crear proyectil
-                    const projectile = {
-                        x: tower.centerX,
-                        y: tower.centerY,
-                        target: target,
-                        color: tower.color,
-                        damage: tower.damage,
-                        aoe: tower.aoe,
-                        explosion: tower.explosion,
-                        slow: tower.slow,
-                        chain: tower.chain
-                    };
-                    
-                    gameState.projectiles.push(projectile);
-                    createProjectileElement(projectile);
-                }
-            });
-        }
-
-        function updateProjectiles() {
-            gameState.projectiles.forEach((projectile, index) => {
-                if (!projectile.target || projectile.target.health <= 0) {
-                    // Eliminar proyectil si el objetivo ya no existe
-                    const projectileElement = document.querySelector(`.projectile[data-id="${projectile.id}"]`);
-                    if (projectileElement) projectileElement.remove();
-                    gameState.projectiles.splice(index, 1);
-                    return;
-                }
-                
-                // Mover proyectil hacia el objetivo
-                const dx = projectile.target.x - projectile.x;
-                const dy = projectile.target.y - projectile.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                const speed = 10;
-                
-                if (distance < speed) {
-                    // Impacto
-                    applyDamage(projectile);
-                    
-                    // Eliminar proyectil
-                    const projectileElement = document.querySelector(`.projectile[data-id="${projectile.id}"]`);
-                    if (projectileElement) projectileElement.remove();
-                    gameState.projectiles.splice(index, 1);
-                } else {
-                    projectile.x += (dx / distance) * speed;
-                    projectile.y += (dy / distance) * speed;
-                    
-                    // Actualizar elemento visual
-                    const projectileElement = document.querySelector(`.projectile[data-id="${projectile.id}"]`);
-                    if (projectileElement) {
-                        projectileElement.style.left = projectile.x + 'px';
-                        projectileElement.style.top = projectile.y + 'px';
-                    }
-                }
-            });
-        }
-
-        function applyDamage(projectile) {
-            const damage = projectile.damage;
-            const target = projectile.target;
-            
-            // Aplicar daño al objetivo principal
-            target.health -= damage;
-            
-            // Mostrar popup de daño
-            createDamagePopup(target.x, target.y, `-${damage}`, projectile.color);
-            
-            // Efectos especiales
-            if (projectile.slow) {
-                target.slowDuration = 60; // 60 frames = 1 segundo a 60 FPS
-            }
-            
-            if (projectile.explosion) {
-                // Daño en área
-                gameState.enemies.forEach(enemy => {
-                    if (enemy !== target) {
-                        const dx = enemy.x - target.x;
-                        const dy = enemy.y - target.y;
-                        const distance = Math.sqrt(dx * dx + dy * dy);
-                        
-                        if (distance < 80) {
-                            enemy.health -= damage * 0.5;
-                            createDamagePopup(enemy.x, enemy.y, `-${Math.floor(damage * 0.5)}`, projectile.color);
-                        }
-                    }
-                });
-                
-                createExplosion(target.x, target.y, projectile.color);
-            }
-            
-            // Verificar si el enemigo fue eliminado
-            if (target.health <= 0) {
-                // Recompensas
-                gameState.gold += target.reward;
-                gameState.points += target.reward * 10;
-                
-                // Combo
-                gameState.combo++;
-                if (gameState.combo > 1) {
-                    showCombo(gameState.combo);
-                }
-                
-                // Resetear combo después de 3 segundos
-                clearTimeout(gameState.comboTimeout);
-                gameState.comboTimeout = setTimeout(() => {
-                    if (gameState.combo > 3) {
-                        showMessage(`Combo x${gameState.combo}!`, "#ffd700");
-                        gameState.gems += Math.floor(gameState.combo / 3);
-                    }
-                    gameState.combo = 0;
-                }, 3000);
-                
-                // Eliminar enemigo
-                const enemyElement = document.querySelector(`.enemy[data-id="${target.id}"]`);
-                if (enemyElement) enemyElement.remove();
-                
-                const enemyIndex = gameState.enemies.findIndex(e => e.id === target.id);
-                if (enemyIndex !== -1) {
-                    gameState.enemies.splice(enemyIndex, 1);
                 }
                 
                 updateUI();
+                createGenerators();
+                showNotification(`¡${generator.name} mejorado a nivel ${generator.level}!`, 'success');
             }
         }
 
-        function createProjectileElement(projectile) {
-            const gameBoard = document.querySelector('.game-board');
-            const projectileElement = document.createElement('div');
-            projectile.id = 'projectile_' + Date.now() + Math.random();
-            projectileElement.dataset.id = projectile.id;
+        function buyUpgrade(upgradeId) {
+            const upgrade = gameState.upgrades.find(u => u.id === upgradeId);
             
-            projectileElement.className = 'projectile';
-            projectileElement.style.left = projectile.x + 'px';
-            projectileElement.style.top = projectile.y + 'px';
-            projectileElement.style.backgroundColor = projectile.color;
-            projectileElement.style.boxShadow = `0 0 5px ${projectile.color}`;
-            
-            gameBoard.appendChild(projectileElement);
-        }
-
-        function createDamagePopup(x, y, text, color) {
-            const gameBoard = document.querySelector('.game-board');
-            const popup = document.createElement('div');
-            popup.className = 'damage-popup';
-            popup.textContent = text;
-            popup.style.left = x + 'px';
-            popup.style.top = y + 'px';
-            popup.style.color = color;
-            
-            gameBoard.appendChild(popup);
-            
-            setTimeout(() => {
-                popup.remove();
-            }, 1000);
-        }
-
-        function showCombo(combo) {
-            const comboDisplay = document.getElementById('comboDisplay');
-            comboDisplay.textContent = `COMBO x${combo}!`;
-            comboDisplay.style.display = 'block';
-            
-            setTimeout(() => {
-                comboDisplay.style.display = 'none';
-            }, 1000);
-        }
-
-        function checkGameOver() {
-            if (gameState.lives <= 0 && !gameState.gameOver) {
-                gameState.gameOver = true;
-                endGame(false);
-            }
-            
-            // Victoria después de 20 oleadas
-            if (gameState.wave > 20 && !gameState.gameOver) {
-                gameState.gameOver = true;
-                endGame(true);
+            if (!upgrade.purchased && gameState.money >= upgrade.cost) {
+                gameState.money -= upgrade.cost;
+                upgrade.purchased = true;
+                
+                // Aplicar efecto
+                applyUpgradeEffect(upgrade);
+                
+                updateUI();
+                createUpgrades();
+                showNotification(`¡${upgrade.name} desbloqueada!`, 'success');
             }
         }
 
-        function endGame(victory) {
-            const gameOverScreen = document.getElementById('gameOver');
-            const title = document.getElementById('gameOverTitle');
-            const message = document.getElementById('gameOverMessage');
-            const icon = document.getElementById('victoryIcon');
-            const finalWave = document.getElementById('finalWave');
-            const finalScore = document.getElementById('finalScore');
-            const finalGold = document.getElementById('finalGold');
-            
-            if (victory) {
-                title.textContent = "🏆 VICTORIA TOTAL";
-                message.textContent = "¡Has defendido la base espacial de todas las oleadas alienígenas!";
-                icon.textContent = "🚀";
-                icon.style.color = "#ffd700";
-            } else {
-                title.textContent = "💀 BASE DESTRUIDA";
-                message.textContent = "Los alienígenas han superado tus defensas. La base ha caído.";
-                icon.textContent = "👾";
-                icon.style.color = "#FF416C";
+        function applyUpgradeEffect(upgrade) {
+            switch(upgrade.effect) {
+                case 'multiplyClickPower':
+                    gameState.clickPower *= upgrade.value;
+                    break;
+                case 'autoClicker':
+                    // Agregar auto-clicks
+                    startAutoClicker(upgrade.value);
+                    break;
+                case 'generatorMultiplier':
+                    // Ya se aplica en calculateProduction()
+                    break;
+                case 'generatorSpeed':
+                    // Ya se aplica en calculateProduction()
+                    break;
             }
-            
-            finalWave.textContent = gameState.wave - 1;
-            finalScore.textContent = gameState.points;
-            finalGold.textContent = gameState.gold;
-            
-            gameOverScreen.style.display = 'flex';
         }
 
-        function resetGame() {
-            // Resetear estado del juego
-            gameState = {
-                gold: 1000,
-                wave: 1,
-                lives: 25,
-                points: 0,
-                gems: 100,
-                waveActive: false,
-                selectedTower: null,
-                towers: [],
-                enemies: [],
-                projectiles: [],
-                path: gameState.path,
-                grid: gameState.grid,
-                selectedTowerElement: null,
-                combo: 0,
-                comboTimeout: null,
-                gameOver: false,
-                towerTypes: gameState.towerTypes,
-                enemyTypes: gameState.enemyTypes
-            };
+        function buyShopItem(itemId) {
+            const item = gameState.shopItems.find(i => i.id === itemId);
             
-            // Limpiar elementos visuales
-            document.querySelectorAll('.tower-placed, .enemy, .projectile, .damage-popup').forEach(el => el.remove());
-            document.querySelectorAll('.tower-card').forEach(c => c.classList.remove('selected'));
+            if (gameState.gems >= item.cost) {
+                gameState.gems -= item.cost;
+                
+                // Aplicar efecto
+                applyShopItemEffect(item);
+                
+                updateUI();
+                showNotification(`¡${item.name} comprado!`, 'premium');
+            }
+        }
+
+        function applyShopItemEffect(item) {
+            switch(item.effect) {
+                case 'addMoney':
+                    gameState.money += item.value;
+                    gameState.totalMoney += item.value;
+                    break;
+                case 'temporaryMultiplier':
+                    gameState.activeBoosts.push({
+                        type: 'global',
+                        value: item.value,
+                        expires: Date.now() + item.duration
+                    });
+                    break;
+                case 'premiumAutoClicker':
+                    startAutoClicker(item.value);
+                    break;
+                case 'starterPack':
+                    gameState.money += 10000;
+                    gameState.gems += 50;
+                    gameState.clickPower *= 2;
+                    break;
+            }
+        }
+
+        function prestige() {
+            if (gameState.totalMoney >= gameState.prestigeRequirement) {
+                showConfirmModal(
+                    '¿Prestigiar?',
+                    `Reiniciarás todo por un multiplicador x${gameState.nextPrestigeMultiplier}`,
+                    () => {
+                        // Guardar estadísticas previas
+                        const oldPrestige = gameState.prestigeLevel;
+                        const oldMultiplier = gameState.prestigeMultiplier;
+                        
+                        // Aplicar prestigio
+                        gameState.prestigeLevel++;
+                        gameState.prestigeMultiplier *= gameState.nextPrestigeMultiplier;
+                        
+                        // Reiniciar juego
+                        gameState.money = 0;
+                        gameState.clicks = 0;
+                        gameState.clickPower = 1;
+                        gameState.clickLevel = 1;
+                        gameState.clickUpgradeCost = 10;
+                        
+                        gameState.generators.forEach(g => {
+                            g.level = 0;
+                            g.unlocked = g.id === 'generator1';
+                        });
+                        
+                        gameState.upgrades.forEach(u => {
+                            u.purchased = false;
+                        });
+                        
+                        gameState.evolutions.forEach(e => {
+                            e.unlocked = false;
+                        });
+                        
+                        // Actualizar requisito de próximo prestigio
+                        gameState.prestigeRequirement *= 10;
+                        gameState.nextPrestigeMultiplier += 0.5;
+                        
+                        // Actualizar UI
+                        updateUI();
+                        createGenerators();
+                        createUpgrades();
+                        
+                        showNotification(`¡Prestigio ${gameState.prestigeLevel} alcanzado! Multiplicador: x${gameState.prestigeMultiplier.toFixed(2)}`, 'premium');
+                    }
+                );
+            }
+        }
+
+        function upgradeClicker() {
+            const cost = gameState.clickUpgradeCost;
             
-            // Actualizar UI
-            updateUI();
-            updateGridCells();
+            if (gameState.money >= cost) {
+                gameState.money -= cost;
+                gameState.clickPower = Math.floor(gameState.clickPower * 1.5);
+                gameState.clickLevel++;
+                gameState.clickUpgradeCost = Math.floor(cost * 2.5);
+                
+                updateUI();
+                showNotification(`¡Click mejorado a nivel ${gameState.clickLevel}!`, 'success');
+            }
+        }
+
+        // ============================
+        // CÁLCULOS Y ACTUALIZACIONES
+        // ============================
+        function calculateProduction() {
+            let totalProduction = 0;
+            let generatorMultiplier = 1;
+            let speedMultiplier = 1;
             
-            // Ocultar pantalla de game over
-            document.getElementById('gameOver').style.display = 'none';
+            // Aplicar mejoras
+            gameState.upgrades.forEach(upgrade => {
+                if (upgrade.purchased) {
+                    if (upgrade.effect === 'generatorMultiplier') {
+                        generatorMultiplier *= upgrade.value;
+                    }
+                    if (upgrade.effect === 'generatorSpeed') {
+                        speedMultiplier *= upgrade.value;
+                    }
+                }
+            });
             
-            // Restaurar botón de oleada
-            document.getElementById('startWave').disabled = false;
-            document.getElementById('startWave').textContent = '⚔️ INICIAR OLEADA';
+            // Calcular producción de cada generador
+            gameState.generators.forEach(generator => {
+                if (generator.level > 0) {
+                    const production = generator.baseProduction * generator.level * 
+                                     gameState.prestigeMultiplier * generatorMultiplier;
+                    totalProduction += production * speedMultiplier;
+                }
+            });
             
-            // Restaurar mensajes
-            document.getElementById('waveStatus').textContent = 'Construye torres de defensa para proteger la base espacial';
-            document.getElementById('waveProgress').style.width = '0%';
+            return totalProduction;
         }
 
         function updateUI() {
-            document.getElementById('gold').textContent = gameState.gold;
-            document.getElementById('wave').textContent = gameState.wave;
-            document.getElementById('lives').textContent = gameState.lives;
-            document.getElementById('points').textContent = gameState.points;
+            // Actualizar dinero
+            document.getElementById('totalMoney').textContent = formatNumber(gameState.money);
+            document.getElementById('totalMoney').style.animation = 'pulse 0.5s';
+            
+            // Actualizar producción por segundo
+            const production = calculateProduction();
+            document.getElementById('moneyPerSecond').textContent = `+${formatNumber(production)}/s`;
+            
+            // Actualizar estadísticas de click
+            document.getElementById('clickPower').textContent = formatNumber(gameState.clickPower);
+            document.getElementById('clickLevel').textContent = gameState.clickLevel;
+            document.getElementById('clickUpgradeCost').textContent = formatNumber(gameState.clickUpgradeCost);
+            
+            // Actualizar estadísticas generales
+            document.getElementById('totalClicks').textContent = formatNumber(gameState.clicks);
+            document.getElementById('manualCPS').textContent = formatNumber(gameState.clickPower * 10); // Estimado
+            
+            // Actualizar prestigio
+            document.getElementById('prestigeLevel').textContent = gameState.prestigeLevel;
+            document.getElementById('prestigeMultiplier').textContent = `x${gameState.prestigeMultiplier.toFixed(2)}`;
+            document.getElementById('nextPrestigeMultiplier').textContent = `x${gameState.nextPrestigeMultiplier.toFixed(2)}`;
+            document.getElementById('prestigeRequirement').textContent = formatNumber(gameState.prestigeRequirement);
+            
+            // Actualizar gemas
             document.getElementById('gems').textContent = gameState.gems;
             
-            // Actualizar estado del botón de poder especial
-            document.getElementById('specialPower').disabled = gameState.gems < 25 || !gameState.waveActive;
+            // Actualizar barra de progreso global
+            const progressPercent = Math.min((gameState.totalMoney / gameState.prestigeRequirement) * 100, 100);
+            document.getElementById('globalProgressBar').style.width = `${progressPercent}%`;
+            
+            // Habilitar/deshabilitar botón de prestigio
+            document.getElementById('prestigeButton').disabled = gameState.totalMoney < gameState.prestigeRequirement;
+            
+            // Remover animación después de completar
+            setTimeout(() => {
+                document.getElementById('totalMoney').style.animation = '';
+            }, 500);
         }
 
-        function showMessage(text, color) {
-            const message = document.createElement('div');
-            message.textContent = text;
-            message.style.position = 'fixed';
-            message.style.top = '20px';
-            message.style.left = '50%';
-            message.style.transform = 'translateX(-50%)';
-            message.style.backgroundColor = color;
-            message.style.color = 'white';
-            message.style.padding = '15px 30px';
-            message.style.borderRadius = '10px';
-            message.style.zIndex = '1000';
-            message.style.fontWeight = 'bold';
-            message.style.boxShadow = '0 5px 15px rgba(0,0,0,0.3)';
+        function updateEvolutionContent() {
+            const evolutionItems = document.getElementById('evolutionItems');
+            evolutionItems.innerHTML = '';
             
-            document.body.appendChild(message);
+            gameState.evolutions.forEach(evolution => {
+                const evolutionItem = document.createElement('div');
+                evolutionItem.className = 'upgrade-card';
+                evolutionItem.innerHTML = `
+                    <div style="font-size: 2rem; margin-bottom: 10px;">${evolution.icon}</div>
+                    <div style="font-weight: bold; margin-bottom: 5px;">${evolution.name}</div>
+                    <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 10px;">${evolution.description}</div>
+                    <div style="color: var(--premium); font-weight: bold; margin-top: 10px;">${formatNumber(evolution.cost)}</div>
+                `;
+                
+                if (!evolution.unlocked) {
+                    evolutionItem.addEventListener('click', () => buyEvolution(evolution.id));
+                }
+                
+                evolutionItems.appendChild(evolutionItem);
+            });
+        }
+
+        function buyEvolution(evolutionId) {
+            const evolution = gameState.evolutions.find(e => e.id === evolutionId);
+            
+            if (!evolution.unlocked && gameState.money >= evolution.cost) {
+                gameState.money -= evolution.cost;
+                evolution.unlocked = true;
+                
+                applyEvolutionEffect(evolution);
+                updateEvolutionContent();
+                showNotification(`¡${evolution.name} desbloqueada!`, 'success');
+            }
+        }
+
+        function applyEvolutionEffect(evolution) {
+            // Aquí se aplicarían efectos especiales de evolución
+            switch(evolution.effect) {
+                case 'unlockAutomation':
+                    // Desbloquear nuevas mecánicas
+                    break;
+                case 'unlockVR':
+                    // Nueva dimensión de juego
+                    break;
+                case 'unlockAI':
+                    // Optimizaciones automáticas
+                    break;
+                case 'unlockTimeTravel':
+                    // Manipulación temporal
+                    break;
+            }
+        }
+
+        function switchEvolutionTab(index) {
+            document.querySelectorAll('.evolution-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.evolution-content').forEach(content => content.classList.remove('active'));
+            
+            document.querySelectorAll('.evolution-tab')[index].classList.add('active');
+            document.querySelectorAll('.evolution-content')[index].classList.add('active');
+        }
+
+        // ============================
+        // EVENT LISTENERS
+        // ============================
+        function setupEventListeners() {
+            // Clicker principal
+            document.getElementById('clickerButton').addEventListener('click', click);
+            document.getElementById('clickerButton').addEventListener('touchstart', click);
+            
+            // Mejorar clicker
+            document.getElementById('upgradeClicker').addEventListener('click', upgradeClicker);
+            
+            // Prestigio
+            document.getElementById('prestigeButton').addEventListener('click', prestige);
+            
+            // Modal
+            document.getElementById('closeModal').addEventListener('click', closeModal);
+            document.getElementById('modalCancel').addEventListener('click', closeModal);
+            document.getElementById('modalConfirm').addEventListener('click', confirmModalAction);
+            
+            // Eventos de teclado
+            document.addEventListener('keydown', (e) => {
+                if (e.code === 'Space') {
+                    click();
+                    e.preventDefault();
+                }
+            });
+        }
+
+        // ============================
+        // EFECTOS VISUALES
+        // ============================
+        function createParticle(x, y, amount) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.textContent = `+${formatNumber(amount)}`;
+            particle.style.left = x + 'px';
+            particle.style.top = y + 'px';
+            particle.style.color = '#fbbf24';
+            particle.style.fontWeight = 'bold';
+            particle.style.fontSize = '16px';
+            particle.style.pointerEvents = 'none';
+            
+            document.body.appendChild(particle);
+            
+            // Animación
+            const duration = 1000;
+            const startY = y;
+            const endY = startY - 100;
+            const startTime = Date.now();
+            
+            function animate() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                const currentY = startY - (progress * 100);
+                const opacity = 1 - progress;
+                
+                particle.style.top = currentY + 'px';
+                particle.style.opacity = opacity;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    particle.remove();
+                }
+            }
+            
+            animate();
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            
+            // Colores según tipo
+            switch(type) {
+                case 'success':
+                    notification.style.background = 'var(--success)';
+                    break;
+                case 'error':
+                    notification.style.background = 'var(--danger)';
+                    break;
+                case 'premium':
+                    notification.style.background = 'var(--premium)';
+                    break;
+                default:
+                    notification.style.background = 'var(--primary)';
+            }
+            
+            notification.style.display = 'block';
             
             setTimeout(() => {
-                message.style.opacity = '0';
-                message.style.transition = 'opacity 0.5s';
-                setTimeout(() => message.remove(), 500);
-            }, 2000);
+                notification.style.display = 'none';
+            }, 3000);
         }
+
+        // ============================
+        // MODAL DE CONFIRMACIÓN
+        // ============================
+        let currentModalAction = null;
+
+        function showConfirmModal(title, message, action) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalMessage').textContent = message;
+            currentModalAction = action;
+            document.getElementById('confirmModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('confirmModal').classList.remove('active');
+            currentModalAction = null;
+        }
+
+        function confirmModalAction() {
+            if (currentModalAction) {
+                currentModalAction();
+            }
+            closeModal();
+        }
+
+        // ============================
+        // AUTO-CLICKERS Y BUCLE
+        // ============================
+        let autoClickers = [];
+
+        function startAutoClicker(cps) {
+            autoClickers.push({
+                interval: setInterval(() => {
+                    gameState.money += gameState.clickPower * gameState.prestigeMultiplier;
+                    gameState.totalMoney += gameState.clickPower * gameState.prestigeMultiplier;
+                    updateUI();
+                }, 1000 / cps),
+                cps: cps
+            });
+            
+            showNotification(`Auto-clicker activado (+${cps} CPS)`, 'success');
+        }
+
+        function startGameLoop() {
+            setInterval(() => {
+                // Producción automática
+                const production = calculateProduction();
+                gameState.money += production / 10; // Actualizar 10 veces por segundo
+                gameState.totalMoney += production / 10;
+                
+                // Actualizar barras de progreso de generadores
+                updateGeneratorProgressBars();
+                
+                // Actualizar UI
+                updateUI();
+                
+                // Limpiar boosts expirados
+                cleanupExpiredBoosts();
+                
+            }, 100);
+        }
+
+        function updateGeneratorProgressBars() {
+            gameState.generators.forEach(generator => {
+                const progressBar = document.getElementById(`progress-${generator.id}`);
+                if (progressBar) {
+                    // Simular progreso de generación
+                    progressBar.style.width = `${(Date.now() / 1000) % 100}%`;
+                }
+            });
+        }
+
+        function cleanupExpiredBoosts() {
+            const now = Date.now();
+            gameState.activeBoosts = gameState.activeBoosts.filter(boost => boost.expires > now);
+        }
+
+        // ============================
+        // SISTEMA DE GUARDADO
+        // ============================
+        function saveGame() {
+            const saveData = {
+                ...gameState,
+                lastSave: Date.now(),
+                autoClickers: [] // No guardar intervalos
+            };
+            
+            localStorage.setItem('hyperIdleClickerSave', JSON.stringify(saveData));
+        }
+
+        function loadGame() {
+            const saved = localStorage.getItem('hyperIdleClickerSave');
+            if (saved) {
+                const loadedData = JSON.parse(saved);
+                
+                // Cargar datos preservando funciones y referencias
+                Object.keys(gameState).forEach(key => {
+                    if (loadedData[key] !== undefined) {
+                        gameState[key] = loadedData[key];
+                    }
+                });
+                
+                gameState.lastSave = Date.now();
+                showNotification('Partida cargada exitosamente', 'success');
+            }
+        }
+
+        function startAutoSave() {
+            setInterval(saveGame, gameState.saveInterval);
+        }
+
+        // ============================
+        // UTILIDADES
+        // ============================
+        function formatNumber(num) {
+            if (num >= 1e12) return (num / 1e12).toFixed(2) + 'T';
+            if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
+            if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
+            if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
+            return Math.floor(num).toString();
+        }
+
+        // ============================
+        // INICIAR EL JUEGO
+        // ============================
+        document.addEventListener('DOMContentLoaded', initGame);
+
+        // Guardar antes de cerrar
+        window.addEventListener('beforeunload', saveGame);
     </script>
 </body>
 </html>
